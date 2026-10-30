@@ -1,0 +1,100 @@
+[
+  {
+    "name": "WHITE",
+    "fixtures": {
+      "f1": {
+        "dimmer": 255,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 255,
+          "Blue": 255,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f2": {
+        "dimmer": 255,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 255,
+          "Blue": 255,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f3": {
+        "dimmer": 255,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 255,
+          "Blue": 255,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f4": {
+        "dimmer": 255,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 255,
+          "Blue": 255,
+          "Amber": 255
+        },
+        "raw": {}
+      }
+    }
+  },
+  {
+    "name": "AMBER",
+    "fixtures": {
+      "f1": {
+        "dimmer": 128,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 150,
+          "Blue": 60,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f2": {
+        "dimmer": 128,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 150,
+          "Blue": 60,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f3": {
+        "dimmer": 128,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 150,
+          "Blue": 60,
+          "Amber": 255
+        },
+        "raw": {}
+      },
+      "f4": {
+        "dimmer": 128,
+        "strobe": 0,
+        "comp": {
+          "Red": 255,
+          "Green": 150,
+          "Blue": 60,
+          "Amber": 255
+        },
+        "raw": {}
+      }
+    }
+  }
+]

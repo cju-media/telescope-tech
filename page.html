@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telescope Control</title>
+<style>
+:root{--bg:#f4f4f5;--card:#fff;--fg:#18181b;--muted:#71717a;--on:#16a34a;--off:#dc2626;--line:#e4e4e7;--field:#f4f4f5;--accent:#2563eb}
+@media (prefers-color-scheme:dark){:root{--bg:#09090b;--card:#18181b;--fg:#fafafa;--muted:#a1a1aa;--line:#27272a;--field:#27272a;--accent:#60a5fa}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:16px}
+main{max-width:860px;margin:0 auto;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;min-width:0}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:20px;margin:0}h2{font-size:14px;margin:0 0 12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.host{color:var(--muted);font-size:13px}
+.status{margin:20px 0;font-size:18px;display:flex;gap:10px;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--muted);flex:none}
+.on .dot,.live .dot{background:var(--on)}.off .dot{background:var(--off)}
+.warming .dot,.cooling .dot{background:#f59e0b;animation:p 1s infinite alternate}@keyframes p{to{opacity:.3}}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{font:inherit;font-weight:600;padding:14px;border-radius:14px;border:0;color:#fff;cursor:pointer;background:var(--muted)}
+button.plain{background:var(--field);color:var(--fg)}
+#on{background:var(--on)}#off,#blackout{background:var(--off)}#release{background:var(--field);color:var(--fg)}
+#blackout.active{background:var(--on);animation:bp .9s infinite alternate}@keyframes bp{to{opacity:.7}}
+button:disabled{opacity:.4;cursor:default}
+.err{color:var(--off);font-size:13px;min-height:1.4em;margin-top:12px}
+.chip{font-size:13px;display:inline-flex;gap:8px;align-items:center;color:var(--muted)}
+.section{border-top:1px solid var(--line);margin-top:20px;padding-top:20px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.sw{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);padding:0;cursor:pointer}
+.row{display:grid;grid-template-columns:76px 1fr 44px;gap:12px;align-items:center;margin:10px 0;font-size:14px}
+.row output{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
+input[type=color]{width:44px;height:36px;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--field);cursor:pointer;flex:none}
+input[type=text],input[type=number],input[type=search],select{font:inherit;font-size:14px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--fg);min-width:0;width:100%}
+.lbtns{display:flex;gap:8px}.lbtns button{padding:8px 14px;font-size:14px;border-radius:10px}
+.empty{color:var(--muted);font-size:14px;margin:0}
+
+/* Scenes */
+.scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.scene{position:relative}
+.scene .recall{width:100%;background:var(--field);color:var(--fg);text-align:left;padding:10px 12px;border:2px solid transparent}
+.scene .recall.current{border-color:var(--accent)}
+.strip{display:flex;gap:3px;margin-bottom:8px;background:#000;border-radius:6px;padding:3px}
+.strip span{flex:1;height:14px;border-radius:3px}
+.scene .x{position:absolute;top:-6px;right:-6px;width:24px;height:24px;padding:0;border-radius:50%;font-size:14px;line-height:1;
+  background:var(--card);color:var(--muted);border:1px solid var(--line);display:none}
+.scene:hover .x,.scene:focus-within .x{display:block}
+@media (hover:none){.scene .x{display:block}}
+.save{display:flex;gap:8px;margin-bottom:6px}
+.save button{background:var(--accent);padding:10px 16px;border-radius:12px}
+
+/* Fixture tiles */
+.fixtures{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.fx{background:var(--field);border-radius:14px;padding:14px;min-width:0}
+.fx .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.fx .top>span{min-width:0}
+.fx b{font-size:16px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx small{color:var(--muted);display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx .row{grid-template-columns:64px 1fr;margin:6px 0;font-size:13px}
+.fx .bulb{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none}
+.fx details{margin-top:8px;font-size:13px}
+.fx summary{cursor:pointer;color:var(--muted)}
+.ctl{margin:8px 0}
+.ctl .lab{display:flex;justify-content:space-between;gap:6px;color:var(--muted);font-size:12px}
+.ctl .lab button{padding:0 6px;font-size:12px;background:none;color:var(--muted);border-radius:6px}
+.ctl select{margin-top:4px;padding:6px 8px;font-size:13px}
+
+/* Patch */
+.umap{margin-bottom:16px}
+.umap .ulabel{font-size:13px;color:var(--muted);margin-bottom:6px}
+.cells{display:grid;grid-template-columns:repeat(32,1fr);gap:2px}
+.cells i{display:block;height:9px;border-radius:2px;background:var(--field);cursor:default}
+.cells i.used{cursor:pointer}
+.ptable{width:100%;border-collapse:collapse;font-size:14px}
+.ptable th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:6px 4px;border-bottom:1px solid var(--line)}
+.ptable td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ptable td.type{color:var(--muted);font-size:13px;max-width:220px}
+.ptable input[type=number]{width:72px}
+.ptable select{min-width:120px}
+.ptable small{white-space:nowrap}
+.ptable .acts{white-space:nowrap;text-align:right}
+.ptable .acts button{padding:4px 8px;font-size:13px;border-radius:8px;background:var(--field);color:var(--fg)}
+.ptable .acts button.del{color:var(--off)}
+.ptable tr.flash td{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.ptable .key{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.tablewrap{overflow-x:auto}
+.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:640px){.addgrid{grid-template-columns:1fr}.ptable td.type{display:none}.ptable th.type{display:none}}
+.results{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.results button{display:block;width:100%;text-align:left;background:none;color:var(--fg);padding:8px 12px;border-radius:0;font-weight:400;font-size:14px;border-bottom:1px solid var(--line)}
+.results button:last-child{border-bottom:0}
+.results button.sel{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.results button small{color:var(--muted)}
+.field{display:grid;gap:4px;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.field.inline{grid-template-columns:repeat(3,1fr);gap:8px}
+.chlist{font-size:12px;color:var(--muted);columns:2;margin:6px 0 12px;padding-left:22px}
+.addbtn{background:var(--accent);width:100%}
+
+/* Stage plot */
+.stagebar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:12px}
+.stagebar label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.stagebar input[type=number]{width:84px}
+.stagebar .check{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--fg);padding-bottom:8px}
+.plotwrap{background:var(--field);border-radius:14px;padding:8px;touch-action:none}
+#plot{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none;border-radius:8px}
+#plot:focus{outline:none}#plot:focus-visible{outline:2px solid var(--accent)}
+#plot .deck{fill:var(--card);stroke:var(--line);stroke-width:.03}
+#plot .grid{stroke:var(--line);stroke-width:.015}
+#plot .lbl{fill:var(--muted);font-size:.26px;font-family:inherit;text-anchor:middle}
+#plot .fxname{fill:var(--fg);font-size:.24px;text-anchor:middle;font-weight:600;pointer-events:none}
+#plot .body{fill:#3f3f46;stroke:var(--muted);stroke-width:.03;cursor:grab}
+#plot .sel .body{stroke:var(--accent);stroke-width:.07}
+#plot .screen{cursor:grab}
+#plot .handle{fill:var(--accent);cursor:ew-resize}
+#plot .edge{stroke:transparent;stroke-width:.28}
+#plot .corner{fill:var(--card);stroke:var(--muted);stroke-width:.03}
+#plot .corner:hover,#plot .edge:hover{stroke:var(--accent)}
+#plot .preview{fill:color-mix(in srgb,var(--accent) 15%,transparent);stroke:var(--accent);stroke-width:.04;stroke-dasharray:.15 .1}
+#plot .hint{fill:var(--accent);font-size:.3px;text-anchor:middle;font-weight:600}
+#plot.drawing,#plot.drawing *{cursor:crosshair}
+#drawStage.active{background:var(--accent);color:#fff}
+#plot .dragging,#plot .dragging *{cursor:grabbing}
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center;font-size:13px;color:var(--muted)}
+.tray button{padding:6px 10px;font-size:13px;border-radius:999px;background:var(--field);color:var(--fg);font-weight:500;cursor:grab;touch-action:none}
+.ghost{position:fixed;pointer-events:none;z-index:10;padding:6px 10px;font-size:13px;border-radius:999px;background:var(--accent);color:#fff;transform:translate(-50%,-50%)}
+.selpanel{margin-top:12px;background:var(--field);border-radius:14px;padding:12px 14px}
+.selpanel .head b{font-size:15px}
+.selpanel .row{grid-template-columns:64px 1fr 44px}
+.selpanel .lbtns button{background:var(--card);color:var(--fg)}
+</style></head><body><main>
+
+<div class="card">
+  <div class="head"><h1>Projector</h1><span class="host" id="projHost">__HOST__</span></div>
+  <div class="status" id="st"><span class="dot"></span><span id="label">Checking…</span></div>
+  <div class="btns"><button id="on">Turn on</button><button id="off">Turn off</button></div>
+  <div class="err" id="err"></div>
+</div>
+
+<div class="card">
+  <div class="head"><h1>Lights</h1><span class="host">Art-Net node __ARTNET__</span></div>
+  <div class="head" style="margin-top:12px">
+    <span class="chip" id="lst"><span class="dot"></span><span id="llabel">Not sending</span></span>
+    <span class="lbtns"><button id="blackout">Blackout</button><button id="release" title="Stop sending so another console (e.g. Lightkey) can take over">Release</button></span>
+  </div>
+  <div class="section">
+    <h2>Scenes</h2>
+    <div class="scenes" id="scenes"></div>
+    <form class="save" id="saveForm"><input type="text" id="sceneName" placeholder="Name this look…" maxlength="40" autocomplete="off"><button>Save</button></form>
+    <div class="row"><span>Fade</span><input type="range" id="fade" min="0" max="10" step="0.1" value="2"><output id="fadeOut">2.0 s</output></div>
+  </div>
+  <div class="section">
+    <h2>All fixtures</h2>
+    <div class="swatches" id="swatches"></div>
+    <div class="row"><span>Color</span><span><input type="color" id="allColor" value="#ffffff"></span><span></span></div>
+    <div class="row"><span>Dimmer</span><input type="range" id="allDimmer" min="0" max="255" value="0"><output id="allDimmerOut">0%</output></div>
+    <div id="allComps"></div>
+    <div class="row"><span>Strobe</span><input type="range" id="allStrobe" min="0" max="255" value="0"><output id="allStrobeOut">Off</output></div>
+  </div>
+  <div class="section">
+    <h2>Fixtures</h2>
+    <div class="fixtures" id="fixtures"></div>
+  </div>
+  <div class="err" id="lerr"></div>
+</div>
+
+<div class="card">
+  <div class="head"><h1>Stage</h1><span class="host">Top-down · drag lights to place them</span></div>
+  <div class="section">
+    <div class="stagebar">
+      <button class="plain" id="drawStage" style="padding:8px 14px;font-size:14px;border-radius:10px;margin-bottom:2px">Draw stage</button>
+      <span class="check"><input type="checkbox" id="scOn"><label for="scOn" style="color:inherit;display:inline">Screen</label></span>
+      <label>Screen width (m)<input type="number" id="scW" min="0.5" max="100" step="0.1"></label>
+    </div>
+    <div class="plotwrap"><svg id="plot" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stage plot"></svg></div>
+    <div class="tray" id="tray"></div>
+    <div class="selpanel" id="selpanel" hidden></div>
+    <div class="err" id="serr"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head"><h1>Patch</h1><span class="host">Profiles from Lightkey</span></div>
+  <div class="section">
+    <div id="umaps"></div>
+    <div class="tablewrap"><table class="ptable">
+      <thead><tr><th>Name</th><th class="type">Fixture</th><th>Mode</th><th>Univ.</th><th>Address</th><th></th></tr></thead>
+      <tbody id="ptbody"></tbody>
+    </table></div>
+    <div class="err" id="perr"></div>
+  </div>
+  <div class="section">
+    <h2>Add fixture</h2>
+    <div class="addgrid">
+      <div>
+        <input type="search" id="psearch" placeholder="Search 7,000+ Lightkey profiles…" autocomplete="off">
+        <div class="results" id="presults"><p class="empty" style="padding:10px 12px">Type a manufacturer or model, e.g. "chauvet slimpar".</p></div>
+      </div>
+      <div id="addForm" hidden>
+        <div class="field"><b id="addTitle" style="color:var(--fg);font-size:15px"></b></div>
+        <label class="field">Mode<select id="addMode"></select></label>
+        <ol class="chlist" id="addChannels"></ol>
+        <div class="field inline">
+          <label>Universe<input type="number" id="addUniverse" min="0" max="32767" value="__UNIVERSE__"></label>
+          <label>Address<input type="number" id="addAddress" min="1" max="512" placeholder="auto"></label>
+          <label>How many<input type="number" id="addCount" min="1" max="64" value="1"></label>
+        </div>
+        <label class="field">Name<input type="text" id="addName" maxlength="40" placeholder="e.g. Back wash"></label>
+        <button class="addbtn" id="addBtn">Add to patch</button>
+        <div class="err" id="aerr"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const pct=v=>Math.round(v/255*100)+'%';
+const hex=(r,g,b)=>'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+const rgb=h=>({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});
+// Tiny element builder; text always goes in as text, never HTML.
+function h(tag,props,...kids){
+  const el=document.createElement(tag);
+  for(const [k,v] of Object.entries(props||{})){
+    if(k.startsWith('on'))el[k]=v;else if(k==='class')el.className=v;else if(k==='style')el.style.cssText=v;
+    else if(v===true)el.setAttribute(k,'');else if(v!==false&&v!=null)el.setAttribute(k,v);
+  }
+  for(const c of kids.flat())if(c!=null&&c!==false)el.append(c.nodeType?c:String(c));
+  return el;
+}
+async function api(method,url,body){
+  const r=await fetch(url,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  const d=await r.json().catch(()=>({error:'HTTP '+r.status}));
+  if(d&&d.error)throw new Error(d.error);
+  return d;
+}
+
+// ---------- Projector ----------
+function show(d){
+  if(d.error){$('err').textContent=d.error;$('label').textContent='Unknown';$('st').className='status';return}
+  $('err').textContent='';$('label').textContent=d.label;$('st').className='status '+d.state;
+  if(d.host)$('projHost').textContent=d.host;
+  $('on').disabled=d.state!=='off';$('off').disabled=d.state!=='on';
+  // The stage plot lights up the screen while the projector is on.
+  const on=d.state==='on'||d.state==='warming';
+  if(on!==projOn){projOn=on;if(!drag)drawPlot()}
+}
+async function refresh(){try{show(await (await fetch('api/status')).json())}catch(e){show({error:String(e)})}}
+async function power(p){
+  $('on').disabled=$('off').disabled=true;$('label').textContent=p==='on'?'Turning on…':'Turning off…';
+  try{show(await (await fetch('api/power/'+p,{method:'POST'})).json())}catch(e){show({error:String(e)})}
+}
+$('on').onclick=()=>power('on');$('off').onclick=()=>power('off');
+
+// ---------- Lights ----------
+let L=null; // latest lights state
+let dragging=0;
+document.addEventListener('pointerdown',()=>dragging++);
+document.addEventListener('pointerup',()=>setTimeout(()=>dragging=Math.max(0,dragging-1),300));
+
+async function lpost(url,body){
+  try{const d=await api('POST',url,body);$('lerr').textContent='';renderLights(d,true);return d}
+  catch(e){$('lerr').textContent=e.message}
+}
+// Coalesce slider updates per target: one request in flight, latest values win.
+let busy=false;const queue=[];
+function merge(a,b){
+  const out=Object.assign({},a,b);
+  for(const k of ['comp','raw','color'])if(a[k]||b[k])out[k]=Object.assign({},a[k],b[k]);
+  return out;
+}
+function light(body){
+  const key=JSON.stringify(body.fixtures||null)+(body.fade?'f':'');
+  const q=queue.find(x=>x.key===key);
+  if(q)q.body=merge(q.body,body);else queue.push({key,body});
+  pump();
+}
+async function pump(){
+  if(busy)return;busy=true;
+  while(queue.length){const {body}=queue.shift();await lpost('api/lights',body)}
+  busy=false;
+}
+
+const fadeSecs=()=>+$('fade').value;
+try{const f=localStorage.getItem('fade');if(f!==null)$('fade').value=f}catch(e){}
+$('fadeOut').textContent=fadeSecs().toFixed(1)+' s';
+$('fade').oninput=()=>{$('fadeOut').textContent=fadeSecs().toFixed(1)+' s';try{localStorage.setItem('fade',$('fade').value)}catch(e){}};
+
+const PRESETS=[
+  ['Warm white',{r:255,g:150,b:60},{Amber:255,White:180}],['White',{r:255,g:255,b:255},{Amber:0,White:255}],
+  ['Red',{r:255,g:0,b:0}],['Orange',{r:255,g:60,b:0},{Amber:255}],['Green',{r:0,g:255,b:0}],['Cyan',{r:0,g:255,b:255}],
+  ['Blue',{r:0,g:0,b:255}],['Purple',{r:160,g:0,b:255}],['Pink',{r:255,g:0,b:120}]];
+for(const [name,c,extra] of PRESETS){
+  // Presets clear the extra emitters (amber, white, UV...) unless they set them.
+  $('swatches').append(h('button',{class:'sw',title:name,style:'background:'+hex(c.r,c.g,c.b),onclick:()=>{
+    const cm={};for(const n of compNames())cm[n]=(extra||{})[n]||0;
+    light({color:c,comp:cm,dimmer:Math.max(+$('allDimmer').value,128),fade:fadeSecs()});
+  }}));
+}
+function compNames(){
+  // Non-RGB emitters present in the patch (Amber, White, UV...).
+  const s=new Set();
+  for(const f of (L&&L.fixtures)||[])for(const n of f.components)if(!['Red','Green','Blue'].includes(n))s.add(n);
+  return [...s];
+}
+function bindRange(el,out,fmt,make){
+  el.oninput=()=>{if(out)out.textContent=fmt(+el.value);light(make(+el.value))};
+}
+bindRange($('allDimmer'),$('allDimmerOut'),pct,v=>({dimmer:v}));
+bindRange($('allStrobe'),$('allStrobeOut'),v=>v?pct(v):'Off',v=>({strobe:v}));
+$('allColor').oninput=e=>light({color:rgb(e.target.value)});
+let blackedOut=false;
+$('blackout').onclick=()=>lpost('api/lights/blackout',{on:!blackedOut,fade:fadeSecs()});
+$('release').onclick=()=>lpost('api/lights/release');
+
+// Scenes
+let lastScene=null,scenesKey='';
+function recall(name){lastScene=name;lpost('api/scenes/recall',{name,fade:fadeSecs()})}
+$('saveForm').onsubmit=async e=>{
+  e.preventDefault();const name=$('sceneName').value.trim();if(!name)return $('sceneName').focus();
+  lastScene=name;scenesKey='';await lpost('api/scenes',{name});$('sceneName').value='';
+};
+async function removeScene(name){
+  if(!confirm('Delete scene "'+name+'"?'))return;
+  try{renderLights(await api('DELETE','api/scenes/'+encodeURIComponent(name)),true)}catch(e){$('lerr').textContent=e.message}
+}
+function renderScenes(list){
+  const k=JSON.stringify(list)+lastScene;if(k===scenesKey)return;scenesKey=k;
+  const box=$('scenes');box.replaceChildren();
+  if(!list.length){box.append(h('p',{class:'empty',style:'grid-column:1/-1'},'No scenes yet. Set up a look, name it, and Save.'));return}
+  for(const s of list){
+    box.append(h('div',{class:'scene'},
+      h('button',{class:'recall'+(s.name===lastScene?' current':''),onclick:()=>recall(s.name)},
+        h('div',{class:'strip'},s.preview.map(c=>h('span',{style:'background:'+c}))),s.name),
+      h('button',{class:'x',title:'Delete scene',onclick:()=>removeScene(s.name)},'×')));
+  }
+}
+
+// "All fixtures" sliders for extra emitters
+let compsKey='';
+function renderAllComps(){
+  const names=compNames(),k=names.join('|');if(k===compsKey)return;compsKey=k;
+  $('allComps').replaceChildren(...names.map(n=>{
+    const inp=h('input',{type:'range',min:0,max:255,value:0}),out=h('output',{},'0%');
+    bindRange(inp,out,pct,v=>({comp:{[n]:v}}));
+    return h('div',{class:'row'},h('span',{},n),inp,out);
+  }));
+}
+
+// Fixture tiles
+let tilesVersion=-1;const openDetails=new Set();const tileRefs={};
+function buildTiles(){
+  const box=$('fixtures');box.replaceChildren();
+  for(const k in tileRefs)delete tileRefs[k];
+  if(!L.fixtures.length){box.append(h('p',{class:'empty'},'Nothing patched yet — add fixtures in the Patch section below.'));return}
+  for(const f of L.fixtures){
+    const refs={comp:{},raw:{}};tileRefs[f.id]=refs;
+    const one=b=>light(Object.assign({fixtures:[f.id]},b));
+    const slider=(label,max,make)=>{const i=h('input',{type:'range',min:0,max});i.oninput=()=>one(make(+i.value));return [i,h('div',{class:'row'},h('span',{},label),i)]};
+    const hasRGB=['Red','Green','Blue'].every(n=>f.components.includes(n));
+    refs.bulb=h('span',{class:'bulb'});
+    if(hasRGB){refs.color=h('input',{type:'color',title:'Color'});refs.color.oninput=e=>one({color:rgb(e.target.value)})}
+    const rows=[];
+    let r;[refs.dimmer,r]=slider('Dimmer',255,v=>({dimmer:v}));rows.push(r);
+    for(const n of f.components){
+      if(hasRGB&&['Red','Green','Blue'].includes(n))continue;
+      [refs.comp[n],r]=slider(n,255,v=>({comp:{[n]:v}}));rows.push(r);
+    }
+    if(f.strobe){[refs.strobe,r]=slider('Strobe',255,v=>({strobe:v}));rows.push(r)}
+    let details=null;
+    if(f.controls.length){
+      const ctls=f.controls.map(c=>{
+        const i=h('input',{type:'range',min:0,max:c.max});i.oninput=()=>one({raw:{[c.key]:+i.value}});
+        refs.raw[c.key]=i;
+        const parts=[h('div',{class:'lab'},h('span',{},c.label+(c.fine?' (16-bit)':'')),
+          h('button',{title:'Back to default',onclick:()=>one({raw:{[c.key]:null}})},'reset')),i];
+        if(c.options.length){
+          const sel=h('select',{},h('option',{value:''},'Choose…'),c.options.map((o,j)=>h('option',{value:j},o.label+' ('+o.lo+(o.hi!==o.lo?'–'+o.hi:'')+')')));
+          sel.onchange=()=>{if(sel.value==='')return;const o=c.options[+sel.value];
+            const v=c.fine?o.lo*256:o.lo;one({raw:{[c.key]:v}});sel.value=''};
+          parts.push(sel);
+        }
+        return h('div',{class:'ctl'},parts);
+      });
+      details=h('details',{},h('summary',{},'Channels ('+f.controls.length+')'),ctls);
+      if(openDetails.has(f.id))details.open=true;
+      details.ontoggle=()=>details.open?openDetails.add(f.id):openDetails.delete(f.id);
+    }
+    box.append(h('div',{class:'fx'},
+      h('div',{class:'top'},h('span',{},h('b',{title:f.name},f.name),h('small',{title:f.label},'U'+f.universe+' · '+f.address+'–'+(f.address+f.footprint-1)+' · '+f.label)),
+        h('span',{style:'display:flex;gap:8px;align-items:center'},refs.bulb,refs.color)),
+      rows,details));
+  }
+}
+function setVal(el,v){if(el&&!(dragging&&el===document.activeElement))el.value=v}
+function renderLights(s,force){
+  L=s;
+  $('lst').className='chip'+(s.live?' live':'');
+  $('llabel').textContent=s.blackout?'Blacked out':s.live?'Sending to node':'Not sending (released)';
+  $('release').disabled=!s.live;
+  blackedOut=s.blackout;
+  $('blackout').textContent=s.blackout?'Restore':'Blackout';
+  $('blackout').classList.toggle('active',s.blackout);
+  $('blackout').setAttribute('aria-pressed',s.blackout);
+  renderScenes(s.scenes);renderAllComps();
+  if(s.patchVersion!==tilesVersion){tilesVersion=s.patchVersion;buildTiles()}
+  clearTimeout(fadePoll);if(s.fading)fadePoll=setTimeout(refreshLights,200);
+  for(const f of s.fixtures){
+    const r=tileRefs[f.id];if(!r)continue;
+    r.bulb.style.background=f.swatch;
+    if(dragging&&!force)continue;
+    const st=f.state;
+    setVal(r.dimmer,st.dimmer);setVal(r.strobe,st.strobe);
+    if(r.color)setVal(r.color,hex(st.comp.Red||0,st.comp.Green||0,st.comp.Blue||0));
+    for(const n in r.comp)setVal(r.comp[n],st.comp[n]||0);
+    // Untouched channels sit at the profile default; "reset" returns them there.
+    for(const c of f.controls)setVal(r.raw[c.key],st.raw[c.key]??c.def);
+  }
+  updatePlotColors();
+}
+let fadePoll=null;
+async function refreshLights(){try{renderLights(await api('GET','api/lights'))}catch(e){}}
+
+// ---------- Patch ----------
+let P=null;
+const fxColor=i=>'hsl('+((i*67)%360)+' 70% 55%)';
+async function loadPatch(){try{renderPatch(await api('GET','api/patch'))}catch(e){$('perr').textContent=e.message}}
+// Returns the new patch, or null after showing the error (and redrawing to undo the bad edit).
+async function patchCall(method,url,body,errEl){
+  try{const d=await api(method,url,body);$('perr').textContent='';renderPatch(d);refreshLights();return d}
+  catch(e){(errEl||$('perr')).textContent=e.message;loadPatch();return null}
+}
+function renderUniverseMaps(){
+  const univs=[...new Set(P.fixtures.map(f=>f.universe))].sort((a,b)=>a-b);
+  $('umaps').replaceChildren(...univs.map(u=>{
+    const owner=new Array(512).fill(null);
+    P.fixtures.forEach((f,i)=>{if(f.universe!==u)return;for(let c=0;c<f.footprint;c++)if(f.address-1+c<512)owner[f.address-1+c]=[f,i,c]});
+    const used=owner.filter(Boolean).length;
+    return h('div',{class:'umap'},h('div',{class:'ulabel'},'Universe '+u+' · '+used+'/512 channels used'),
+      h('div',{class:'cells'},owner.map((o,i)=>o
+        ?h('i',{class:'used',style:'background:'+fxColor(o[1])+(o[2]?';opacity:.65':''),title:o[0].name+' · '+(i+1)+' ('+o[0].mode+' ch '+(o[2]+1)+')',onclick:()=>flashRow(o[0].id)})
+        :h('i',{title:'Channel '+(i+1)+' (free)'}))));
+  }));
+}
+function flashRow(id){
+  const tr=document.querySelector('tr[data-id="'+id+'"]');if(!tr)return;
+  tr.scrollIntoView({block:'nearest',behavior:'smooth'});tr.classList.add('flash');setTimeout(()=>tr.classList.remove('flash'),1200);
+}
+const profileCache={};
+async function describe(id){return profileCache[id]||(profileCache[id]=await api('GET','api/profiles/'+encodeURIComponent(id)))}
+function renderPatch(d){
+  P=d;renderUniverseMaps();
+  $('selpanel').dataset.id='';if(!drag)drawPlot(); // names or fixtures may have changed
+  const tb=$('ptbody');tb.replaceChildren();
+  if(!P.fixtures.length){tb.append(h('tr',{},h('td',{colspan:6,class:'empty'},'No fixtures patched.')));return}
+  P.fixtures.forEach((f,i)=>{
+    const upd=body=>patchCall('PATCH','api/patch/'+f.id,body);
+    const name=h('input',{type:'text',value:f.name,maxlength:40,'aria-label':'Name'});name.onchange=()=>upd({name:name.value});
+    const uni=h('input',{type:'number',value:f.universe,min:0,max:32767,'aria-label':'Universe'});uni.onchange=()=>upd({universe:+uni.value});
+    const addr=h('input',{type:'number',value:f.address,min:1,max:512,'aria-label':'Address'});addr.onchange=()=>upd({address:+addr.value});
+    // Mode list loads on demand (needs Lightkey); until then show the current mode.
+    const mode=h('select',{'aria-label':'Mode'},h('option',{value:f.personality},f.mode));
+    mode.onfocus=async()=>{
+      if(mode.dataset.loaded)return;mode.dataset.loaded=1;
+      try{const p=await describe(f.profile);mode.replaceChildren(...p.personalities.map(x=>h('option',{value:x.index},x.label+(x.label.includes(x.footprint)?'':' ('+x.footprint+'ch)'))));mode.value=f.personality}
+      catch(e){$('perr').textContent=e.message}
+    };
+    mode.onchange=()=>upd({personality:+mode.value});
+    tb.append(h('tr',{'data-id':f.id},
+      h('td',{},h('span',{style:'display:flex;align-items:center'},h('span',{class:'key',style:'background:'+fxColor(i)}),name)),
+      h('td',{class:'type',title:f.profile},f.manufacturer+' '+f.model),
+      h('td',{},mode),h('td',{},uni),
+      h('td',{},h('span',{style:'display:flex;align-items:center;gap:6px'},addr,h('small',{class:'host'},'–'+(f.address+f.footprint-1)))),
+      h('td',{class:'acts'},
+        h('button',{title:'Move up',disabled:i===0,onclick:()=>patchCall('POST','api/patch/'+f.id+'/move',{dir:-1})},'↑'),' ',
+        h('button',{title:'Move down',disabled:i===P.fixtures.length-1,onclick:()=>patchCall('POST','api/patch/'+f.id+'/move',{dir:1})},'↓'),' ',
+        h('button',{class:'del',title:'Remove from patch',onclick:()=>{if(confirm('Remove '+f.name+' from the patch? It will also be removed from saved scenes.'))patchCall('DELETE','api/patch/'+f.id)}},'Remove'))));
+  });
+}
+
+// Add fixture
+let searchTimer=null,chosen=null;
+$('psearch').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(search,150)};
+async function search(){
+  const q=$('psearch').value.trim(),box=$('presults');
+  if(!q){box.replaceChildren(h('p',{class:'empty',style:'padding:10px 12px'},'Type a manufacturer or model, e.g. "chauvet slimpar".'));return}
+  try{
+    const list=await api('GET','api/profiles?q='+encodeURIComponent(q));
+    if(!list.length){box.replaceChildren(h('p',{class:'empty',style:'padding:10px 12px'},'No matching profiles.'));return}
+    box.replaceChildren(...list.map(p=>h('button',{class:chosen&&chosen.id===p.id?'sel':'',onclick:e=>choose(p.id,e.currentTarget)},p.name,' ',h('small',{},p.manufacturer))));
+  }catch(e){box.replaceChildren(h('p',{class:'err',style:'padding:10px 12px'},e.message))}
+}
+async function choose(id,btn){
+  document.querySelectorAll('#presults .sel').forEach(b=>b.classList.remove('sel'));if(btn)btn.classList.add('sel');
+  $('aerr').textContent='';
+  try{
+    chosen=await describe(id);
+    $('addForm').hidden=false;$('addTitle').textContent=chosen.manufacturer+' '+chosen.name;
+    $('addMode').replaceChildren(...chosen.personalities.map(x=>h('option',{value:x.index},x.label+(x.label.includes(x.footprint)?'':' ('+x.footprint+'ch)'))));
+    $('addName').placeholder=chosen.name;
+    showChannels();suggestAddress();
+  }catch(e){$('aerr').textContent=e.message}
+}
+function showChannels(){
+  const per=chosen.personalities[+$('addMode').value]||chosen.personalities[0];
+  $('addChannels').replaceChildren(...per.channels.map(c=>h('li',{},c||'—')));
+}
+async function suggestAddress(){
+  if(!chosen)return;
+  const per=chosen.personalities[+$('addMode').value];
+  const n=Math.max(1,+$('addCount').value||1);
+  try{const r=await api('GET','api/patch/free?universe='+(+$('addUniverse').value)+'&footprint='+per.footprint*n);
+    $('addAddress').placeholder=r.address?'auto ('+r.address+')':'full'}catch(e){}
+}
+$('addMode').onchange=()=>{showChannels();suggestAddress()};
+$('addUniverse').onchange=suggestAddress;$('addCount').oninput=suggestAddress;
+$('addBtn').onclick=async()=>{
+  if(!chosen)return;
+  const body={profile:chosen.id,personality:+$('addMode').value,universe:+$('addUniverse').value,count:+$('addCount').value||1,name:$('addName').value.trim()};
+  if($('addAddress').value)body.address=+$('addAddress').value;
+  $('addBtn').disabled=true;$('aerr').textContent='';
+  if(await patchCall('POST','api/patch',body,$('aerr'))){$('addAddress').value='';$('addName').value='';$('addCount').value=1;suggestAddress()}
+  $('addBtn').disabled=false;
+};
+
+// ---------- Stage plot ----------
+// Coordinates are metres: x across the stage as the audience sees it, y from upstage (0) to the front edge.
+let S=null,sel=null,drag=null,projOn=false;
+const SNAP=0.1,snap=v=>Math.round(v/SNAP)*SNAP,clampN=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const plot=$('plot');
+function sv(tag,attrs,...kids){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const [k,v] of Object.entries(attrs||{}))if(v!=null)el.setAttribute(k,v);
+  for(const c of kids.flat())if(c!=null)el.append(c.nodeType?c:document.createTextNode(String(c)));
+  return el;
+}
+const fxInfo=id=>((P&&P.fixtures)||[]).find(f=>f.id===id);
+const fxLive=id=>((L&&L.fixtures)||[]).find(f=>f.id===id);
+// How bright a "#rrggbb" swatch is, 0–1, for the glow's strength.
+const lum=c=>c&&c.length===7?Math.max(...[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)))/255:0;
+
+async function loadStage(){
+  try{S=await api('GET','api/stage');syncStageInputs();drawPlot()}catch(e){$('serr').textContent=e.message}
+}
+let stageTimer=null;
+function saveStage(){
+  clearTimeout(stageTimer);
+  stageTimer=setTimeout(async()=>{
+    try{const d=await api('PUT','api/stage',S);$('serr').textContent='';if(!drag){S=d;syncStageInputs();drawPlot()}}
+    catch(e){$('serr').textContent=e.message}
+  },250);
+}
+function syncStageInputs(){
+  if(document.activeElement!==$('scW'))$('scW').value=S.screen.width;
+  $('scOn').checked=S.screen.visible;$('scW').disabled=!S.screen.visible;
+}
+$('scW').onchange=()=>{S.screen.width=+$('scW').value||S.screen.width;saveStage()};
+$('scOn').onchange=()=>{S.screen.visible=$('scOn').checked;$('scW').disabled=!S.screen.visible;drawPlot();saveStage()};
+
+// Reshaping the stage: while you drag an edge or draw a new box, the view is frozen
+// (with room around the stage to grow into) so the plot doesn't rescale under the pointer.
+let view=null,drawMode=false;
+const roomAround=(W,D)=>{const px=Math.max(2.5,W*0.5),py=Math.max(2,D*0.5);return {x:-px,y:-py,w:W+2*px,h:D+2*py}};
+// Make the box at (left, top, W, D) — in the old stage's coordinates — the new stage.
+// Lights and the screen stay where they are on the floor; anything outside is pulled in.
+function reframe(o,left,top,W,D){
+  W=+W.toFixed(2);D=+D.toFixed(2);
+  S.width=W;S.depth=D;
+  S.positions=Object.fromEntries(Object.entries(o.positions).map(([id,p])=>
+    [id,{x:clampN(+(p.x-left).toFixed(2),0,W),y:clampN(+(p.y-top).toFixed(2),0,D)}]));
+  const sw=Math.min(o.screen.width,W);
+  S.screen={...o.screen,width:sw,x:clampN(+(o.screen.x-left).toFixed(2),sw/2,W-sw/2),y:clampN(+(o.screen.y-top).toFixed(2),0,D)};
+  syncStageInputs();
+}
+function setDrawMode(on){
+  drawMode=on;view=on?roomAround(S.width,S.depth):null;
+  $('drawStage').classList.toggle('active',on);$('drawStage').textContent=on?'Cancel':'Draw stage';
+  drawPlot();
+}
+$('drawStage').onclick=()=>setDrawMode(!drawMode);
+document.addEventListener('keydown',e=>{if(drawMode&&e.key==='Escape'&&!drag)setDrawMode(false)});
+
+function drawPlot(){
+  if(!S)return;
+  const W=S.width,D=S.depth,m=0.7;
+  if(view){
+    // Shift the frozen view by how far the stage's corner has moved, so everything stays put on screen.
+    const off=(drag&&drag.off)||{x:0,y:0};
+    plot.setAttribute('viewBox',(view.x-off.x)+' '+(view.y-off.y)+' '+view.w+' '+view.h);
+  }else plot.setAttribute('viewBox',(-m)+' '+(-m)+' '+(W+2*m)+' '+(D+2*m));
+  plot.classList.toggle('drawing',drawMode);
+  const defs=sv('defs');
+  const kids=[defs,sv('rect',{class:'deck',x:0,y:0,width:W,height:D,rx:0.08})];
+  for(let x=1;x<W;x++)kids.push(sv('line',{class:'grid',x1:x,y1:0,x2:x,y2:D}));
+  for(let y=1;y<D;y++)kids.push(sv('line',{class:'grid',x1:0,y1:y,x2:W,y2:y}));
+  kids.push(sv('text',{class:'lbl',x:W/2,y:-0.25},'UPSTAGE'),
+    sv('text',{class:'lbl',x:W/2,y:D+0.45},'AUDIENCE'),
+    // From the audience, stage right is on the left.
+    sv('text',{class:'lbl',x:-0.35,y:D/2,transform:'rotate(-90 '+(-0.35)+' '+(D/2)+')'},'STAGE RIGHT'),
+    sv('text',{class:'lbl',x:W+0.35,y:D/2,transform:'rotate(90 '+(W+0.35)+' '+(D/2)+')'},'STAGE LEFT'),
+    sv('text',{class:'lbl',x:W-0.05,y:D+0.45,style:'text-anchor:end'},+W.toFixed(1)+' × '+(+D.toFixed(1))+' m'));
+  if(!drawMode){
+    // Grab an edge or corner of the stage to reshape it.
+    const cur={n:'ns',s:'ns',e:'ew',w:'ew',nw:'nwse',se:'nwse',ne:'nesw',sw:'nesw'};
+    for(const [d,x1,y1,x2,y2] of [['n',0,0,W,0],['s',0,D,W,D],['w',0,0,0,D],['e',W,0,W,D]])
+      kids.push(sv('line',{class:'edge','data-kind':'st-'+d,x1,y1,x2,y2,style:'cursor:'+cur[d]+'-resize'}));
+    for(const [d,x,y] of [['nw',0,0],['ne',W,0],['sw',0,D],['se',W,D]])
+      kids.push(sv('rect',{class:'corner','data-kind':'st-'+d,x:x-0.11,y:y-0.11,width:0.22,height:0.22,rx:0.04,style:'cursor:'+cur[d]+'-resize'}));
+  }
+  if(S.screen.visible){
+    const sc=S.screen,x0=sc.x-sc.width/2;
+    kids.push(sv('g',{class:'screen','data-kind':'screen'},
+      projOn?sv('rect',{x:x0,y:sc.y,width:sc.width,height:Math.min(1.2,D-sc.y),fill:'#93c5fd',opacity:0.18}):null,
+      sv('rect',{x:x0,y:sc.y-0.07,width:sc.width,height:0.14,rx:0.03,fill:projOn?'#93c5fd':'#71717a'}),
+      // Label below the screen when it's right at the back, so it doesn't sit on "UPSTAGE".
+      sv('text',{class:'lbl',x:sc.x,y:sc.y<0.5?sc.y+0.4:sc.y-0.2},'Screen · '+sc.width+' m'+(projOn?' · on':''))),
+      sv('circle',{class:'handle','data-kind':'hl',cx:x0,cy:sc.y,r:0.13}),
+      sv('circle',{class:'handle','data-kind':'hr',cx:x0+sc.width,cy:sc.y,r:0.13}));
+  }
+  for(const [id,p] of Object.entries(S.positions)){
+    const f=fxInfo(id);if(!f)continue;
+    const c=(fxLive(id)||{}).swatch||'#000000';
+    defs.append(sv('radialGradient',{id:'glow-'+id},sv('stop',{offset:0,'stop-color':c}),sv('stop',{offset:1,'stop-color':c,'stop-opacity':0})));
+    kids.push(sv('g',{class:'fxg'+(sel===id?' sel':''),'data-kind':'fx','data-id':id,transform:'translate('+p.x+' '+p.y+')'},
+      sv('circle',{class:'glow',r:0.75,fill:'url(#glow-'+id+')',opacity:0.85*lum(c)}),
+      sv('rect',{class:'body',x:-0.22,y:-0.22,width:0.44,height:0.44,rx:0.08}),
+      sv('circle',{class:'lens',r:0.13,fill:lum(c)>0.02?c:'#18181b'}),
+      sv('text',{class:'fxname',y:0.5},f.name),
+      sv('title',{},f.name+' · '+f.manufacturer+' '+f.model+' · U'+f.universe+'.'+f.address)));
+  }
+  if(drawMode){
+    const r=drag&&drag.rect;
+    if(r)kids.push(sv('rect',{class:'preview',x:r.x,y:r.y,width:r.w,height:r.h}),
+      sv('text',{class:'hint',x:r.x+r.w/2,y:r.y+r.h/2+0.1},+r.w.toFixed(1)+' × '+(+r.h.toFixed(1))+' m'));
+    else kids.push(sv('text',{class:'hint',x:W/2,y:view.y+0.5},'Drag to draw the stage'));
+  }
+  plot.replaceChildren(...kids);
+  if(drag)plot.classList.add('dragging');else plot.classList.remove('dragging');
+  drawTray();drawSelPanel();
+}
+// Live colors from the lights poll, without rebuilding the plot mid-drag.
+function updatePlotColors(){
+  if(!S)return;
+  for(const g of plot.querySelectorAll('.fxg')){
+    const id=g.dataset.id,c=(fxLive(id)||{}).swatch||'#000000';
+    plot.querySelectorAll('#glow-'+CSS.escape(id)+' stop').forEach(s=>s.setAttribute('stop-color',c));
+    g.querySelector('.glow').setAttribute('opacity',0.85*lum(c));
+    g.querySelector('.lens').setAttribute('fill',lum(c)>0.02?c:'#18181b');
+  }
+  updateSelPanel();
+}
+function svgPoint(e){return new DOMPoint(e.clientX,e.clientY).matrixTransform(plot.getScreenCTM().inverse())}
+
+const snapshot=()=>JSON.parse(JSON.stringify(S));
+plot.onpointerdown=e=>{
+  if(!S)return;
+  // Stage reshapes work in the coordinates the drag started in, so keep that mapping.
+  const inv=plot.getScreenCTM().inverse(),at=new DOMPoint(e.clientX,e.clientY).matrixTransform(inv);
+  if(drawMode){
+    e.preventDefault();plot.setPointerCapture(e.pointerId);
+    drag={kind:'draw',inv,start:at,moved:false,orig:snapshot(),rect:null};
+    return;
+  }
+  const t=e.target.closest('[data-kind]');
+  if(!t){select(null);return}
+  e.preventDefault();plot.setPointerCapture(e.pointerId);plot.focus({preventScroll:true,focusVisible:false});
+  const id=t.dataset.id,kind=t.dataset.kind;
+  if(kind.startsWith('st-')){
+    view=roomAround(S.width,S.depth);
+    drag={kind,inv,start:at,moved:false,orig:snapshot(),off:{x:0,y:0}};
+    return;
+  }
+  drag={kind,id,start:svgPoint(e),moved:false,
+    orig:kind==='fx'?{...S.positions[id]}:{...S.screen}};
+  if(kind==='fx')select(id);
+};
+plot.onpointermove=e=>{
+  if(!drag)return;
+  if(drag.kind==='draw'||drag.kind.startsWith('st-')){
+    const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(drag.inv);
+    if(!drag.moved&&Math.hypot(p.x-drag.start.x,p.y-drag.start.y)<0.05)return;
+    drag.moved=true;
+    if(drag.kind==='draw'){
+      const x1=snap(drag.start.x),y1=snap(drag.start.y),x2=snap(p.x),y2=snap(p.y);
+      drag.rect={x:Math.min(x1,x2),y:Math.min(y1,y2),w:Math.abs(x2-x1),h:Math.abs(y2-y1)};
+    }else{
+      const o=drag.orig,d=drag.kind.slice(3);
+      let L=0,T=0,R=o.width,B=o.depth;
+      if(d.includes('w'))L=Math.min(snap(p.x),R-1);
+      if(d.includes('e'))R=Math.max(snap(p.x),L+1);
+      if(d.includes('n'))T=Math.min(snap(p.y),B-1);
+      if(d.includes('s'))B=Math.max(snap(p.y),T+1);
+      reframe(o,L,T,R-L,B-T);drag.off={x:L,y:T};
+    }
+    drawPlot();return;
+  }
+  const p=svgPoint(e),dx=p.x-drag.start.x,dy=p.y-drag.start.y,o=drag.orig;
+  if(!drag.moved&&Math.hypot(dx,dy)<0.05)return;
+  drag.moved=true;
+  if(drag.kind==='fx')S.positions[drag.id]={x:clampN(snap(o.x+dx),0,S.width),y:clampN(snap(o.y+dy),0,S.depth)};
+  else if(drag.kind==='screen'){
+    S.screen.x=clampN(snap(o.x+dx),o.width/2,S.width-o.width/2);S.screen.y=clampN(snap(o.y+dy),0,S.depth);
+  }else{
+    // Drag one end; the other end stays put.
+    const left=o.x-o.width/2,right=o.x+o.width/2;
+    let l=left,r=right;
+    if(drag.kind==='hr')r=clampN(snap(p.x),left+0.5,S.width);else l=clampN(snap(p.x),0,right-0.5);
+    S.screen.width=+(r-l).toFixed(2);S.screen.x=+((l+r)/2).toFixed(2);syncStageInputs();
+  }
+  drawPlot();
+};
+plot.onpointerup=plot.onpointercancel=()=>{
+  if(!drag)return;
+  const d=drag;drag=null;
+  if(d.kind==='draw'){
+    const r=d.rect;
+    if(r&&r.w>=1&&r.h>=1){reframe(d.orig,r.x,r.y,r.w,r.h);setDrawMode(false);saveStage()}
+    else drawPlot(); // too small (or just a click): keep drawing
+    return;
+  }
+  if(d.kind.startsWith('st-'))view=null;
+  drawPlot();if(d.moved)saveStage();
+};
+plot.setAttribute('tabindex','0');
+plot.onkeydown=e=>{
+  if(drawMode&&e.key==='Escape'){setDrawMode(false);return}
+  if(!sel||!S.positions[sel])return;
+  const step=e.shiftKey?0.5:SNAP,p=S.positions[sel];
+  const mv={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
+  if(mv){e.preventDefault();p.x=clampN(+(p.x+mv[0]).toFixed(2),0,S.width);p.y=clampN(+(p.y+mv[1]).toFixed(2),0,S.depth);drawPlot();saveStage()}
+  else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();unplace(sel)}
+  else if(e.key==='Escape')select(null);
+};
+
+function select(id){sel=id;drawPlot()}
+function unplace(id){delete S.positions[id];if(sel===id)sel=null;drawPlot();saveStage()}
+// Somewhere free along the front of the stage for a fixture placed with a click.
+function autoSpot(){
+  const used=Object.values(S.positions);
+  const y=Math.max(0,S.depth-0.8);
+  for(let x=0.6;x<=S.width-0.4;x+=0.9)if(!used.some(p=>Math.hypot(p.x-x,p.y-y)<0.6))return {x:snap(x),y:snap(y)};
+  return {x:snap(S.width/2),y:snap(S.depth/2)};
+}
+function drawTray(){
+  const box=$('tray');
+  const off=((P&&P.fixtures)||[]).filter(f=>!S.positions[f.id]);
+  if(!off.length){box.replaceChildren(h('span',{},(P&&P.fixtures.length)?'Every fixture is on the stage.':'Patch some fixtures to place them.'));return}
+  box.replaceChildren(h('span',{},'Not on stage — drag or tap to place:'),...off.map(f=>{
+    const b=h('button',{title:'Drag onto the stage, or tap to place at the front'},f.name);
+    b.onpointerdown=e=>trayDrag(e,f);
+    return b;
+  }));
+}
+function trayDrag(e,f){
+  e.preventDefault();
+  const sx=e.clientX,sy=e.clientY;let ghost=null;
+  const move=ev=>{
+    if(!ghost&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<5)return;
+    if(!ghost){ghost=h('div',{class:'ghost'},f.name);document.body.append(ghost)}
+    ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';
+  };
+  const up=ev=>{
+    document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+    let spot=null;
+    if(!ghost)spot=autoSpot(); // a tap
+    else{
+      ghost.remove();
+      const r=plot.getBoundingClientRect();
+      if(ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom){
+        const p=svgPoint(ev);spot={x:clampN(snap(p.x),0,S.width),y:clampN(snap(p.y),0,S.depth)};
+      }
+    }
+    if(spot){S.positions[f.id]=spot;sel=f.id;drawPlot();saveStage()}
+  };
+  document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
+}
+
+// Quick controls for the selected light.
+let selRefs=null;
+function drawSelPanel(){
+  const box=$('selpanel'),f=sel&&fxInfo(sel),live=sel&&fxLive(sel);
+  if(!f||!S.positions[sel]){box.hidden=true;selRefs=null;box.dataset.id='';return}
+  if(box.dataset.id===sel&&selRefs){updateSelPanel();return}
+  box.dataset.id=sel;box.hidden=false;
+  const one=b=>light(Object.assign({fixtures:[f.id]},b));
+  const dim=h('input',{type:'range',min:0,max:255}),out=h('output',{});
+  dim.oninput=()=>{out.textContent=pct(+dim.value);one({dimmer:+dim.value})};
+  const hasRGB=live&&['Red','Green','Blue'].every(n=>live.components.includes(n));
+  const col=hasRGB?h('input',{type:'color',title:'Color'}):null;
+  if(col)col.oninput=()=>one({color:rgb(col.value)});
+  selRefs={dim,out,col};
+  box.replaceChildren(
+    h('div',{class:'head'},h('span',{},h('b',{},f.name),' ',h('small',{class:'host'},f.manufacturer+' '+f.model+' · U'+f.universe+'.'+f.address)),
+      h('span',{class:'lbtns'},
+        h('button',{onclick:()=>showTile(f.id)},'All controls'),
+        h('button',{onclick:()=>unplace(f.id)},'Remove from stage'))),
+    h('div',{class:'row'},h('span',{},'Dimmer'),dim,out),
+    col?h('div',{class:'row'},h('span',{},'Color'),h('span',{},col),h('span',{})):null);
+  updateSelPanel();
+}
+function updateSelPanel(){
+  const live=sel&&fxLive(sel);if(!selRefs||!live)return;
+  setVal(selRefs.dim,live.state.dimmer);selRefs.out.textContent=pct(live.state.dimmer);
+  if(selRefs.col)setVal(selRefs.col,hex(live.state.comp.Red||0,live.state.comp.Green||0,live.state.comp.Blue||0));
+}
+function showTile(id){
+  const i=((L&&L.fixtures)||[]).findIndex(f=>f.id===id);
+  const tile=document.querySelectorAll('#fixtures .fx')[i];if(!tile)return;
+  const d=tile.querySelector('details');if(d){d.open=true;openDetails.add(id)}
+  tile.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+refresh();refreshLights();loadPatch().then(loadStage);
+setInterval(refresh,5000);setInterval(refreshLights,3000);
+</script></body></html>

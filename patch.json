@@ -1,0 +1,722 @@
+[
+  {
+    "id": "f1",
+    "name": "P1",
+    "universe": 1,
+    "address": 1,
+    "model": {
+      "profile": "Chauvet - SlimPAR Q12 USB",
+      "manufacturer": "Chauvet",
+      "name": "SlimPAR Q12 USB",
+      "mode": "9-channel",
+      "personality": 0,
+      "footprint": 9,
+      "intensity": [
+        {
+          "ch": 7,
+          "lo": 0,
+          "hi": 255
+        }
+      ],
+      "components": [
+        {
+          "ch": 0,
+          "name": "Red"
+        },
+        {
+          "ch": 1,
+          "name": "Green"
+        },
+        {
+          "ch": 2,
+          "name": "Blue"
+        },
+        {
+          "ch": 3,
+          "name": "Amber"
+        }
+      ],
+      "strobe": {
+        "ch": 5,
+        "off": 0,
+        "lo": 16,
+        "hi": 255
+      },
+      "controls": [
+        {
+          "key": "c4",
+          "label": "Color Macro",
+          "ch": 4,
+          "fade": false,
+          "options": []
+        },
+        {
+          "key": "c5",
+          "label": "Shutter / Strobe",
+          "ch": 5,
+          "fade": false,
+          "strobe": true,
+          "options": [
+            {
+              "label": "Program Speed: Slow > Fast",
+              "lo": 0,
+              "hi": 255
+            },
+            {
+              "label": "Shutter / Strobe: Open",
+              "lo": 0,
+              "hi": 15
+            },
+            {
+              "label": "Shutter / Strobe: Strobe",
+              "lo": 16,
+              "hi": 255
+            },
+            {
+              "label": "Sound Sensitivity: Off",
+              "lo": 0,
+              "hi": 10
+            },
+            {
+              "label": "Sound Sensitivity: Low > High",
+              "lo": 11,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c6",
+          "label": "Mode",
+          "ch": 6,
+          "fade": false,
+          "options": [
+            {
+              "label": "RGBA Mode",
+              "lo": 0,
+              "hi": 31
+            },
+            {
+              "label": "Pulse 0% – 100%",
+              "lo": 32,
+              "hi": 63
+            },
+            {
+              "label": "Pulse 100% – 0%",
+              "lo": 64,
+              "hi": 95
+            },
+            {
+              "label": "Pulse 100% – 0% – 100%",
+              "lo": 96,
+              "hi": 127
+            },
+            {
+              "label": "Auto Fade Transition",
+              "lo": 128,
+              "hi": 159
+            },
+            {
+              "label": "Auto Snap Transition (4 Colors)",
+              "lo": 160,
+              "hi": 191
+            },
+            {
+              "label": "Auto Snap Transition (19 Colors)",
+              "lo": 192,
+              "hi": 223
+            },
+            {
+              "label": "Sound Triggering Mode",
+              "lo": 224,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c8",
+          "label": "Dimmer Speed",
+          "ch": 8,
+          "fade": false,
+          "options": [
+            {
+              "label": "Dimmer Speed From Display",
+              "lo": 0,
+              "hi": 51
+            },
+            {
+              "label": "Dimmer Speed Mode Off",
+              "lo": 52,
+              "hi": 101
+            },
+            {
+              "label": "Dimmer Speed Mode 1 Fast",
+              "lo": 102,
+              "hi": 151
+            },
+            {
+              "label": "Dimmer Speed Mode 2 Medium",
+              "lo": 152,
+              "hi": 203
+            },
+            {
+              "label": "Dimmer Speed Mode 3 Slow",
+              "lo": 204,
+              "hi": 255
+            }
+          ]
+        }
+      ],
+      "defaults": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "id": "f2",
+    "name": "P2",
+    "universe": 1,
+    "address": 10,
+    "model": {
+      "profile": "Chauvet - SlimPAR Q12 USB",
+      "manufacturer": "Chauvet",
+      "name": "SlimPAR Q12 USB",
+      "mode": "9-channel",
+      "personality": 0,
+      "footprint": 9,
+      "intensity": [
+        {
+          "ch": 7,
+          "lo": 0,
+          "hi": 255
+        }
+      ],
+      "components": [
+        {
+          "ch": 0,
+          "name": "Red"
+        },
+        {
+          "ch": 1,
+          "name": "Green"
+        },
+        {
+          "ch": 2,
+          "name": "Blue"
+        },
+        {
+          "ch": 3,
+          "name": "Amber"
+        }
+      ],
+      "strobe": {
+        "ch": 5,
+        "off": 0,
+        "lo": 16,
+        "hi": 255
+      },
+      "controls": [
+        {
+          "key": "c4",
+          "label": "Color Macro",
+          "ch": 4,
+          "fade": false,
+          "options": []
+        },
+        {
+          "key": "c5",
+          "label": "Shutter / Strobe",
+          "ch": 5,
+          "fade": false,
+          "strobe": true,
+          "options": [
+            {
+              "label": "Program Speed: Slow > Fast",
+              "lo": 0,
+              "hi": 255
+            },
+            {
+              "label": "Shutter / Strobe: Open",
+              "lo": 0,
+              "hi": 15
+            },
+            {
+              "label": "Shutter / Strobe: Strobe",
+              "lo": 16,
+              "hi": 255
+            },
+            {
+              "label": "Sound Sensitivity: Off",
+              "lo": 0,
+              "hi": 10
+            },
+            {
+              "label": "Sound Sensitivity: Low > High",
+              "lo": 11,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c6",
+          "label": "Mode",
+          "ch": 6,
+          "fade": false,
+          "options": [
+            {
+              "label": "RGBA Mode",
+              "lo": 0,
+              "hi": 31
+            },
+            {
+              "label": "Pulse 0% – 100%",
+              "lo": 32,
+              "hi": 63
+            },
+            {
+              "label": "Pulse 100% – 0%",
+              "lo": 64,
+              "hi": 95
+            },
+            {
+              "label": "Pulse 100% – 0% – 100%",
+              "lo": 96,
+              "hi": 127
+            },
+            {
+              "label": "Auto Fade Transition",
+              "lo": 128,
+              "hi": 159
+            },
+            {
+              "label": "Auto Snap Transition (4 Colors)",
+              "lo": 160,
+              "hi": 191
+            },
+            {
+              "label": "Auto Snap Transition (19 Colors)",
+              "lo": 192,
+              "hi": 223
+            },
+            {
+              "label": "Sound Triggering Mode",
+              "lo": 224,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c8",
+          "label": "Dimmer Speed",
+          "ch": 8,
+          "fade": false,
+          "options": [
+            {
+              "label": "Dimmer Speed From Display",
+              "lo": 0,
+              "hi": 51
+            },
+            {
+              "label": "Dimmer Speed Mode Off",
+              "lo": 52,
+              "hi": 101
+            },
+            {
+              "label": "Dimmer Speed Mode 1 Fast",
+              "lo": 102,
+              "hi": 151
+            },
+            {
+              "label": "Dimmer Speed Mode 2 Medium",
+              "lo": 152,
+              "hi": 203
+            },
+            {
+              "label": "Dimmer Speed Mode 3 Slow",
+              "lo": 204,
+              "hi": 255
+            }
+          ]
+        }
+      ],
+      "defaults": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "id": "f3",
+    "name": "P3",
+    "universe": 1,
+    "address": 19,
+    "model": {
+      "profile": "Chauvet - SlimPAR Q12 USB",
+      "manufacturer": "Chauvet",
+      "name": "SlimPAR Q12 USB",
+      "mode": "9-channel",
+      "personality": 0,
+      "footprint": 9,
+      "intensity": [
+        {
+          "ch": 7,
+          "lo": 0,
+          "hi": 255
+        }
+      ],
+      "components": [
+        {
+          "ch": 0,
+          "name": "Red"
+        },
+        {
+          "ch": 1,
+          "name": "Green"
+        },
+        {
+          "ch": 2,
+          "name": "Blue"
+        },
+        {
+          "ch": 3,
+          "name": "Amber"
+        }
+      ],
+      "strobe": {
+        "ch": 5,
+        "off": 0,
+        "lo": 16,
+        "hi": 255
+      },
+      "controls": [
+        {
+          "key": "c4",
+          "label": "Color Macro",
+          "ch": 4,
+          "fade": false,
+          "options": []
+        },
+        {
+          "key": "c5",
+          "label": "Shutter / Strobe",
+          "ch": 5,
+          "fade": false,
+          "strobe": true,
+          "options": [
+            {
+              "label": "Program Speed: Slow > Fast",
+              "lo": 0,
+              "hi": 255
+            },
+            {
+              "label": "Shutter / Strobe: Open",
+              "lo": 0,
+              "hi": 15
+            },
+            {
+              "label": "Shutter / Strobe: Strobe",
+              "lo": 16,
+              "hi": 255
+            },
+            {
+              "label": "Sound Sensitivity: Off",
+              "lo": 0,
+              "hi": 10
+            },
+            {
+              "label": "Sound Sensitivity: Low > High",
+              "lo": 11,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c6",
+          "label": "Mode",
+          "ch": 6,
+          "fade": false,
+          "options": [
+            {
+              "label": "RGBA Mode",
+              "lo": 0,
+              "hi": 31
+            },
+            {
+              "label": "Pulse 0% – 100%",
+              "lo": 32,
+              "hi": 63
+            },
+            {
+              "label": "Pulse 100% – 0%",
+              "lo": 64,
+              "hi": 95
+            },
+            {
+              "label": "Pulse 100% – 0% – 100%",
+              "lo": 96,
+              "hi": 127
+            },
+            {
+              "label": "Auto Fade Transition",
+              "lo": 128,
+              "hi": 159
+            },
+            {
+              "label": "Auto Snap Transition (4 Colors)",
+              "lo": 160,
+              "hi": 191
+            },
+            {
+              "label": "Auto Snap Transition (19 Colors)",
+              "lo": 192,
+              "hi": 223
+            },
+            {
+              "label": "Sound Triggering Mode",
+              "lo": 224,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c8",
+          "label": "Dimmer Speed",
+          "ch": 8,
+          "fade": false,
+          "options": [
+            {
+              "label": "Dimmer Speed From Display",
+              "lo": 0,
+              "hi": 51
+            },
+            {
+              "label": "Dimmer Speed Mode Off",
+              "lo": 52,
+              "hi": 101
+            },
+            {
+              "label": "Dimmer Speed Mode 1 Fast",
+              "lo": 102,
+              "hi": 151
+            },
+            {
+              "label": "Dimmer Speed Mode 2 Medium",
+              "lo": 152,
+              "hi": 203
+            },
+            {
+              "label": "Dimmer Speed Mode 3 Slow",
+              "lo": 204,
+              "hi": 255
+            }
+          ]
+        }
+      ],
+      "defaults": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "id": "f4",
+    "name": "P4",
+    "universe": 1,
+    "address": 28,
+    "model": {
+      "profile": "Chauvet - SlimPAR Q12 USB",
+      "manufacturer": "Chauvet",
+      "name": "SlimPAR Q12 USB",
+      "mode": "9-channel",
+      "personality": 0,
+      "footprint": 9,
+      "intensity": [
+        {
+          "ch": 7,
+          "lo": 0,
+          "hi": 255
+        }
+      ],
+      "components": [
+        {
+          "ch": 0,
+          "name": "Red"
+        },
+        {
+          "ch": 1,
+          "name": "Green"
+        },
+        {
+          "ch": 2,
+          "name": "Blue"
+        },
+        {
+          "ch": 3,
+          "name": "Amber"
+        }
+      ],
+      "strobe": {
+        "ch": 5,
+        "off": 0,
+        "lo": 16,
+        "hi": 255
+      },
+      "controls": [
+        {
+          "key": "c4",
+          "label": "Color Macro",
+          "ch": 4,
+          "fade": false,
+          "options": []
+        },
+        {
+          "key": "c5",
+          "label": "Shutter / Strobe",
+          "ch": 5,
+          "fade": false,
+          "strobe": true,
+          "options": [
+            {
+              "label": "Program Speed: Slow > Fast",
+              "lo": 0,
+              "hi": 255
+            },
+            {
+              "label": "Shutter / Strobe: Open",
+              "lo": 0,
+              "hi": 15
+            },
+            {
+              "label": "Shutter / Strobe: Strobe",
+              "lo": 16,
+              "hi": 255
+            },
+            {
+              "label": "Sound Sensitivity: Off",
+              "lo": 0,
+              "hi": 10
+            },
+            {
+              "label": "Sound Sensitivity: Low > High",
+              "lo": 11,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c6",
+          "label": "Mode",
+          "ch": 6,
+          "fade": false,
+          "options": [
+            {
+              "label": "RGBA Mode",
+              "lo": 0,
+              "hi": 31
+            },
+            {
+              "label": "Pulse 0% – 100%",
+              "lo": 32,
+              "hi": 63
+            },
+            {
+              "label": "Pulse 100% – 0%",
+              "lo": 64,
+              "hi": 95
+            },
+            {
+              "label": "Pulse 100% – 0% – 100%",
+              "lo": 96,
+              "hi": 127
+            },
+            {
+              "label": "Auto Fade Transition",
+              "lo": 128,
+              "hi": 159
+            },
+            {
+              "label": "Auto Snap Transition (4 Colors)",
+              "lo": 160,
+              "hi": 191
+            },
+            {
+              "label": "Auto Snap Transition (19 Colors)",
+              "lo": 192,
+              "hi": 223
+            },
+            {
+              "label": "Sound Triggering Mode",
+              "lo": 224,
+              "hi": 255
+            }
+          ]
+        },
+        {
+          "key": "c8",
+          "label": "Dimmer Speed",
+          "ch": 8,
+          "fade": false,
+          "options": [
+            {
+              "label": "Dimmer Speed From Display",
+              "lo": 0,
+              "hi": 51
+            },
+            {
+              "label": "Dimmer Speed Mode Off",
+              "lo": 52,
+              "hi": 101
+            },
+            {
+              "label": "Dimmer Speed Mode 1 Fast",
+              "lo": 102,
+              "hi": 151
+            },
+            {
+              "label": "Dimmer Speed Mode 2 Medium",
+              "lo": 152,
+              "hi": 203
+            },
+            {
+              "label": "Dimmer Speed Mode 3 Slow",
+              "lo": 204,
+              "hi": 255
+            }
+          ]
+        }
+      ],
+      "defaults": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+]
