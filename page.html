@@ -46,19 +46,30 @@ input[type=text],input[type=number],input[type=search],select{font:inherit;font-
 .scene:hover .x,.scene:focus-within .x{display:block}
 @media (hover:none){.scene .x{display:block}}
 .save{display:flex;gap:8px;margin-bottom:6px}
+/* Master fader, standing beside the stage plot on the main view */
+.plotrow{display:flex;gap:10px;align-items:stretch}
+.plotrow .plotwrap{flex:1;min-width:0}
+.masterv{flex:none;width:60px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--field);border-radius:14px;padding:10px 0;touch-action:none}
+.masterv output{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.masterv label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.masterv input{writing-mode:vertical-lr;direction:rtl;flex:1;width:28px;min-height:100px;margin:0}
+body.editing .show-only{display:none}
 .save button{background:var(--accent);padding:10px 16px;border-radius:12px}
 
-/* Fixture tiles */
-.fixtures{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
-.fx{background:var(--field);border-radius:14px;padding:14px;min-width:0}
-.fx .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.fx .top>span{min-width:0}
-.fx b{font-size:16px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fx small{color:var(--muted);display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fx .row{grid-template-columns:64px 1fr;margin:6px 0;font-size:13px}
-.fx .bulb{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none}
-.fx details{margin-top:8px;font-size:13px}
-.fx summary{cursor:pointer;color:var(--muted)}
+/* Top bar and menu */
+.topbar{max-width:860px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar b{font-size:20px}
+.menuwrap{position:relative}
+.menubtn{padding:8px 12px;font-size:20px;line-height:1;border-radius:12px}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:200px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.menu a{display:block;padding:10px 12px;border-radius:10px;color:var(--fg);text-decoration:none;font-size:15px}
+.menu a:hover{background:var(--field)}
+.menu a[aria-current=page]{color:var(--accent);font-weight:600}
+.menu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+body:not(.editing) .edit-only{display:none}
+
+/* Fixture controls */
+.bulb{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none;display:inline-block;vertical-align:middle}
 .ctl{margin:8px 0}
 .ctl .lab{display:flex;justify-content:space-between;gap:6px;color:var(--muted);font-size:12px}
 .ctl .lab button{padding:0 6px;font-size:12px;background:none;color:var(--muted);border-radius:6px}
@@ -108,9 +119,13 @@ input[type=text],input[type=number],input[type=search],select{font:inherit;font-
 #plot .lbl{fill:var(--muted);font-size:.26px;font-family:inherit;text-anchor:middle}
 #plot .fxname{fill:var(--fg);font-size:.24px;text-anchor:middle;font-weight:600;pointer-events:none}
 #plot .body{fill:#3f3f46;stroke:var(--muted);stroke-width:.03;cursor:grab}
+body:not(.editing) #plot .body{cursor:pointer}
+body:not(.editing) #plot .screen{cursor:default}
 #plot .sel .body{stroke:var(--accent);stroke-width:.07}
 #plot .screen{cursor:grab}
 #plot .handle{fill:var(--accent);cursor:ew-resize}
+#plot .beam{pointer-events:none}
+#plot .aim{fill:var(--accent);stroke:var(--card);stroke-width:.03;cursor:move}
 #plot .edge{stroke:transparent;stroke-width:.28}
 #plot .corner{fill:var(--card);stroke:var(--muted);stroke-width:.03}
 #plot .corner:hover,#plot .edge:hover{stroke:var(--accent)}
@@ -126,26 +141,45 @@ input[type=text],input[type=number],input[type=search],select{font:inherit;font-
 .selpanel .head b{font-size:15px}
 .selpanel .row{grid-template-columns:64px 1fr 44px}
 .selpanel .lbtns button{background:var(--card);color:var(--fg)}
-</style></head><body><main>
+.selpanel h2{margin:16px 0 4px}
+.selpanel .pos{width:96px;background:var(--card)}
+.selpanel .lbtns{flex-wrap:wrap}.selpanel .lbtns button{white-space:nowrap}
+</style></head><body>
+<header class="topbar">
+  <b id="viewTitle">Stage</b>
+  <div class="menuwrap">
+    <button class="plain menubtn" id="menuBtn" aria-label="Menu" aria-haspopup="true" aria-expanded="false">☰</button>
+    <nav class="menu" id="menu" hidden>
+      <a href="#">Stage</a>
+      <a href="#edit">Edit stage</a>
+      <hr>
+      <a href="#lights">Lights &amp; scenes</a>
+      <a href="#patch">Patch</a>
+    </nav>
+  </div>
+</header>
+<main>
 
-<div class="card">
+<div class="card" data-view="stage">
   <div class="head"><h1>Projector</h1><span class="host" id="projHost">__HOST__</span></div>
   <div class="status" id="st"><span class="dot"></span><span id="label">Checking…</span></div>
   <div class="btns"><button id="on">Turn on</button><button id="off">Turn off</button></div>
   <div class="err" id="err"></div>
 </div>
 
-<div class="card">
+<div class="card" data-view="stage lights">
+  <div class="head"><h1>Scenes</h1></div>
+  <div class="scenes" id="scenes" style="margin-top:16px"></div>
+  <form class="save" id="saveForm"><input type="text" id="sceneName" placeholder="Name this look…" maxlength="40" autocomplete="off"><button>Save</button></form>
+  <div class="row"><span>Fade</span><input type="range" id="fade" min="0" max="10" step="0.1" value="2"><output id="fadeOut">2.0 s</output></div>
+  <div class="err" id="scerr"></div>
+</div>
+
+<div class="card" data-view="lights" hidden>
   <div class="head"><h1>Lights</h1><span class="host">Art-Net node __ARTNET__</span></div>
   <div class="head" style="margin-top:12px">
     <span class="chip" id="lst"><span class="dot"></span><span id="llabel">Not sending</span></span>
     <span class="lbtns"><button id="blackout">Blackout</button><button id="release" title="Stop sending so another console (e.g. Lightkey) can take over">Release</button></span>
-  </div>
-  <div class="section">
-    <h2>Scenes</h2>
-    <div class="scenes" id="scenes"></div>
-    <form class="save" id="saveForm"><input type="text" id="sceneName" placeholder="Name this look…" maxlength="40" autocomplete="off"><button>Save</button></form>
-    <div class="row"><span>Fade</span><input type="range" id="fade" min="0" max="10" step="0.1" value="2"><output id="fadeOut">2.0 s</output></div>
   </div>
   <div class="section">
     <h2>All fixtures</h2>
@@ -155,29 +189,32 @@ input[type=text],input[type=number],input[type=search],select{font:inherit;font-
     <div id="allComps"></div>
     <div class="row"><span>Strobe</span><input type="range" id="allStrobe" min="0" max="255" value="0"><output id="allStrobeOut">Off</output></div>
   </div>
-  <div class="section">
-    <h2>Fixtures</h2>
-    <div class="fixtures" id="fixtures"></div>
-  </div>
   <div class="err" id="lerr"></div>
 </div>
 
-<div class="card">
-  <div class="head"><h1>Stage</h1><span class="host">Top-down · drag lights to place them</span></div>
-  <div class="section">
-    <div class="stagebar">
+<div class="card" data-view="stage edit">
+  <div class="head"><span class="host" id="stageHint"></span></div>
+  <div class="section" style="margin-top:12px;padding-top:0;border-top:0">
+    <div class="stagebar edit-only">
       <button class="plain" id="drawStage" style="padding:8px 14px;font-size:14px;border-radius:10px;margin-bottom:2px">Draw stage</button>
       <span class="check"><input type="checkbox" id="scOn"><label for="scOn" style="color:inherit;display:inline">Screen</label></span>
       <label>Screen width (m)<input type="number" id="scW" min="0.5" max="100" step="0.1"></label>
     </div>
-    <div class="plotwrap"><svg id="plot" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stage plot"></svg></div>
-    <div class="tray" id="tray"></div>
+    <div class="plotrow">
+      <div class="masterv show-only">
+        <output id="masterOut">100%</output>
+        <input type="range" id="master" min="0" max="255" value="255" aria-label="Master">
+        <label for="master">Master</label>
+      </div>
+      <div class="plotwrap"><svg id="plot" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stage plot"></svg></div>
+    </div>
+    <div class="tray edit-only" id="tray"></div>
     <div class="selpanel" id="selpanel" hidden></div>
     <div class="err" id="serr"></div>
   </div>
 </div>
 
-<div class="card">
+<div class="card" data-view="patch" hidden>
   <div class="head"><h1>Patch</h1><span class="host">Profiles from Lightkey</span></div>
   <div class="section">
     <div id="umaps"></div>
@@ -258,8 +295,8 @@ document.addEventListener('pointerdown',()=>dragging++);
 document.addEventListener('pointerup',()=>setTimeout(()=>dragging=Math.max(0,dragging-1),300));
 
 async function lpost(url,body){
-  try{const d=await api('POST',url,body);$('lerr').textContent='';renderLights(d,true);return d}
-  catch(e){$('lerr').textContent=e.message}
+  try{const d=await api('POST',url,body);$('lerr').textContent=$('scerr').textContent='';renderLights(d,true);return d}
+  catch(e){$('lerr').textContent=$('scerr').textContent=e.message}
 }
 // Coalesce slider updates per target: one request in flight, latest values win.
 let busy=false;const queue=[];
@@ -308,20 +345,32 @@ function bindRange(el,out,fmt,make){
 bindRange($('allDimmer'),$('allDimmerOut'),pct,v=>({dimmer:v}));
 bindRange($('allStrobe'),$('allStrobeOut'),v=>v?pct(v):'Off',v=>({strobe:v}));
 $('allColor').oninput=e=>light({color:rgb(e.target.value)});
+// Master: one request in flight, the latest level wins.
+let masterBusy=false,masterNext=null;
+$('master').oninput=async()=>{
+  masterNext=+$('master').value;$('masterOut').textContent=pct(masterNext);
+  if(masterBusy)return;masterBusy=true;
+  while(masterNext!==null){const v=masterNext;masterNext=null;await lpost('api/lights/master',{level:v})}
+  masterBusy=false;
+};
 let blackedOut=false;
 $('blackout').onclick=()=>lpost('api/lights/blackout',{on:!blackedOut,fade:fadeSecs()});
 $('release').onclick=()=>lpost('api/lights/release');
 
 // Scenes
 let lastScene=null,scenesKey='';
-function recall(name){lastScene=name;lpost('api/scenes/recall',{name,fade:fadeSecs()})}
+function recall(name){
+  // Tapping the scene that's on stops it: the lights fade out over the fade time.
+  if(lastScene===name){lastScene=null;renderScenes(L.scenes);light({dimmer:0,fade:fadeSecs()});return}
+  lastScene=name;lpost('api/scenes/recall',{name,fade:fadeSecs()});
+}
 $('saveForm').onsubmit=async e=>{
   e.preventDefault();const name=$('sceneName').value.trim();if(!name)return $('sceneName').focus();
   lastScene=name;scenesKey='';await lpost('api/scenes',{name});$('sceneName').value='';
 };
 async function removeScene(name){
   if(!confirm('Delete scene "'+name+'"?'))return;
-  try{renderLights(await api('DELETE','api/scenes/'+encodeURIComponent(name)),true)}catch(e){$('lerr').textContent=e.message}
+  try{renderLights(await api('DELETE','api/scenes/'+encodeURIComponent(name)),true)}catch(e){$('scerr').textContent=e.message}
 }
 function renderScenes(list){
   const k=JSON.stringify(list)+lastScene;if(k===scenesKey)return;scenesKey=k;
@@ -346,50 +395,59 @@ function renderAllComps(){
   }));
 }
 
-// Fixture tiles
-let tilesVersion=-1;const openDetails=new Set();const tileRefs={};
-function buildTiles(){
-  const box=$('fixtures');box.replaceChildren();
+// The controls for the lights tapped on the stage. With several selected, only what they
+// all have is shown, and the sliders show the first one's levels.
+// Refs go in tileRefs so the lights poll keeps the sliders current.
+let tilesVersion=-1;const tileRefs={};
+function fxControls(fs){
   for(const k in tileRefs)delete tileRefs[k];
-  if(!L.fixtures.length){box.append(h('p',{class:'empty'},'Nothing patched yet — add fixtures in the Patch section below.'));return}
-  for(const f of L.fixtures){
-    const refs={comp:{},raw:{}};tileRefs[f.id]=refs;
-    const one=b=>light(Object.assign({fixtures:[f.id]},b));
-    const slider=(label,max,make)=>{const i=h('input',{type:'range',min:0,max});i.oninput=()=>one(make(+i.value));return [i,h('div',{class:'row'},h('span',{},label),i)]};
-    const hasRGB=['Red','Green','Blue'].every(n=>f.components.includes(n));
-    refs.bulb=h('span',{class:'bulb'});
-    if(hasRGB){refs.color=h('input',{type:'color',title:'Color'});refs.color.oninput=e=>one({color:rgb(e.target.value)})}
-    const rows=[];
-    let r;[refs.dimmer,r]=slider('Dimmer',255,v=>({dimmer:v}));rows.push(r);
-    for(const n of f.components){
-      if(hasRGB&&['Red','Green','Blue'].includes(n))continue;
-      [refs.comp[n],r]=slider(n,255,v=>({comp:{[n]:v}}));rows.push(r);
-    }
-    if(f.strobe){[refs.strobe,r]=slider('Strobe',255,v=>({strobe:v}));rows.push(r)}
-    let details=null;
-    if(f.controls.length){
-      const ctls=f.controls.map(c=>{
-        const i=h('input',{type:'range',min:0,max:c.max});i.oninput=()=>one({raw:{[c.key]:+i.value}});
-        refs.raw[c.key]=i;
-        const parts=[h('div',{class:'lab'},h('span',{},c.label+(c.fine?' (16-bit)':'')),
-          h('button',{title:'Back to default',onclick:()=>one({raw:{[c.key]:null}})},'reset')),i];
-        if(c.options.length){
-          const sel=h('select',{},h('option',{value:''},'Choose…'),c.options.map((o,j)=>h('option',{value:j},o.label+' ('+o.lo+(o.hi!==o.lo?'–'+o.hi:'')+')')));
-          sel.onchange=()=>{if(sel.value==='')return;const o=c.options[+sel.value];
-            const v=c.fine?o.lo*256:o.lo;one({raw:{[c.key]:v}});sel.value=''};
-          parts.push(sel);
-        }
-        return h('div',{class:'ctl'},parts);
-      });
-      details=h('details',{},h('summary',{},'Channels ('+f.controls.length+')'),ctls);
-      if(openDetails.has(f.id))details.open=true;
-      details.ontoggle=()=>details.open?openDetails.add(f.id):openDetails.delete(f.id);
-    }
-    box.append(h('div',{class:'fx'},
-      h('div',{class:'top'},h('span',{},h('b',{title:f.name},f.name),h('small',{title:f.label},'U'+f.universe+' · '+f.address+'–'+(f.address+f.footprint-1)+' · '+f.label)),
-        h('span',{style:'display:flex;gap:8px;align-items:center'},refs.bulb,refs.color)),
-      rows,details));
+  const f=fs[0],all=test=>fs.every(test);
+  const refs={comp:{},raw:{}};tileRefs[f.id]=refs;
+  const one=b=>light(Object.assign({fixtures:fs.map(x=>x.id)},b));
+  const slider=(label,max,make,fmt)=>{
+    const i=h('input',{type:'range',min:0,max}),o=h('output',{});
+    i.oninput=()=>{o.textContent=fmt(+i.value);one(make(+i.value))};
+    i.out=o;i.fmt=fmt;return [i,h('div',{class:'row'},h('span',{},label),i,o)];
+  };
+  const hasRGB=all(x=>['Red','Green','Blue'].every(n=>x.components.includes(n)));
+  refs.bulb=h('span',{class:'bulb'});
+  const rows=[];let r;
+  [refs.dimmer,r]=slider('Dimmer',255,v=>({dimmer:v}),pct);rows.push(r);
+  if(hasRGB){
+    refs.color=h('input',{type:'color',title:'Color'});refs.color.oninput=e=>one({color:rgb(e.target.value)});
+    rows.push(h('div',{class:'row'},h('span',{},'Color'),h('span',{},refs.color),h('span',{})));
   }
+  for(const n of f.components){
+    if(hasRGB&&['Red','Green','Blue'].includes(n)||!all(x=>x.components.includes(n)))continue;
+    [refs.comp[n],r]=slider(n,255,v=>({comp:{[n]:v}}),pct);rows.push(r);
+  }
+  if(fs.some(x=>x.strobe)){[refs.strobe,r]=slider('Strobe',255,v=>({strobe:v}),v=>v?pct(v):'Off');rows.push(r)}
+  const same=c=>all(x=>x.controls.some(d=>d.key===c.key&&d.label===c.label&&d.max===c.max));
+  const ctls=f.controls.filter(same).map(c=>{
+    const i=h('input',{type:'range',min:0,max:c.max});i.oninput=()=>one({raw:{[c.key]:+i.value}});
+    refs.raw[c.key]=i;
+    const parts=[h('div',{class:'lab'},h('span',{},c.label+(c.fine?' (16-bit)':'')),
+      h('button',{title:'Back to default',onclick:()=>one({raw:{[c.key]:null}})},'reset')),i];
+    if(c.options.length){
+      const sel=h('select',{},h('option',{value:''},'Choose…'),c.options.map((o,j)=>h('option',{value:j},o.label+' ('+o.lo+(o.hi!==o.lo?'–'+o.hi:'')+')')));
+      sel.onchange=()=>{if(sel.value==='')return;const o=c.options[+sel.value];
+        const v=c.fine?o.lo*256:o.lo;one({raw:{[c.key]:v}});sel.value=''};
+      parts.push(sel);
+    }
+    return h('div',{class:'ctl'},parts);
+  });
+  return [rows,ctls.length?[h('h2',{},'Channels ('+ctls.length+')'),ctls]:null];
+}
+function fillTile(f,force){
+  const r=tileRefs[f.id];if(!r)return;
+  r.bulb.style.background=f.swatch;
+  if(dragging&&!force)return;
+  const st=f.state,set=(el,v)=>{setVal(el,v);if(el&&el.out)el.out.textContent=el.fmt(+el.value)};
+  set(r.dimmer,st.dimmer);set(r.strobe,st.strobe);
+  if(r.color)setVal(r.color,hex(st.comp.Red||0,st.comp.Green||0,st.comp.Blue||0));
+  for(const n in r.comp)set(r.comp[n],st.comp[n]||0);
+  // Untouched channels sit at the profile default; "reset" returns them there.
+  for(const c of f.controls)setVal(r.raw[c.key],st.raw[c.key]??c.def);
 }
 function setVal(el,v){if(el&&!(dragging&&el===document.activeElement))el.value=v}
 function renderLights(s,force){
@@ -401,20 +459,11 @@ function renderLights(s,force){
   $('blackout').textContent=s.blackout?'Restore':'Blackout';
   $('blackout').classList.toggle('active',s.blackout);
   $('blackout').setAttribute('aria-pressed',s.blackout);
+  if(!masterBusy){setVal($('master'),s.master);$('masterOut').textContent=pct(s.master)}
   renderScenes(s.scenes);renderAllComps();
-  if(s.patchVersion!==tilesVersion){tilesVersion=s.patchVersion;buildTiles()}
+  if(s.patchVersion!==tilesVersion){tilesVersion=s.patchVersion;$('selpanel').dataset.id='';if(S&&!drag)drawSelPanel()}
   clearTimeout(fadePoll);if(s.fading)fadePoll=setTimeout(refreshLights,200);
-  for(const f of s.fixtures){
-    const r=tileRefs[f.id];if(!r)continue;
-    r.bulb.style.background=f.swatch;
-    if(dragging&&!force)continue;
-    const st=f.state;
-    setVal(r.dimmer,st.dimmer);setVal(r.strobe,st.strobe);
-    if(r.color)setVal(r.color,hex(st.comp.Red||0,st.comp.Green||0,st.comp.Blue||0));
-    for(const n in r.comp)setVal(r.comp[n],st.comp[n]||0);
-    // Untouched channels sit at the profile default; "reset" returns them there.
-    for(const c of f.controls)setVal(r.raw[c.key],st.raw[c.key]??c.def);
-  }
+  for(const f of s.fixtures)fillTile(f,force);
   updatePlotColors();
 }
 let fadePoll=null;
@@ -524,7 +573,9 @@ $('addBtn').onclick=async()=>{
 
 // ---------- Stage plot ----------
 // Coordinates are metres: x across the stage as the audience sees it, y from upstage (0) to the front edge.
-let S=null,sel=null,drag=null,projOn=false;
+// The main view only shows the plot (tap a light to control it); #edit is where things move.
+// sel lists the selected fixture ids; the first one's levels are what the panel shows.
+let S=null,sel=[],drag=null,projOn=false,editing=false;
 const SNAP=0.1,snap=v=>Math.round(v/SNAP)*SNAP,clampN=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const plot=$('plot');
 function sv(tag,attrs,...kids){
@@ -566,7 +617,7 @@ function reframe(o,left,top,W,D){
   W=+W.toFixed(2);D=+D.toFixed(2);
   S.width=W;S.depth=D;
   S.positions=Object.fromEntries(Object.entries(o.positions).map(([id,p])=>
-    [id,{x:clampN(+(p.x-left).toFixed(2),0,W),y:clampN(+(p.y-top).toFixed(2),0,D)}]));
+    [id,{...p,x:clampN(+(p.x-left).toFixed(2),0,W),y:clampN(+(p.y-top).toFixed(2),0,D)}]));
   const sw=Math.min(o.screen.width,W);
   S.screen={...o.screen,width:sw,x:clampN(+(o.screen.x-left).toFixed(2),sw/2,W-sw/2),y:clampN(+(o.screen.y-top).toFixed(2),0,D)};
   syncStageInputs();
@@ -578,6 +629,47 @@ function setDrawMode(on){
 }
 $('drawStage').onclick=()=>setDrawMode(!drawMode);
 document.addEventListener('keydown',e=>{if(drawMode&&e.key==='Escape'&&!drag)setDrawMode(false)});
+
+// Beams: the plot is top-down, so a tilted light throws its pool out along its direction.
+// Throw is drawn for a nominal 1.5 m between lens and floor, capped so a level beam stays on screen.
+const BEAM_H=1.5,BEAM_MAX=4,BEAM_SPREAD=12;
+const beamReach=t=>Math.min(BEAM_MAX,BEAM_H*Math.tan(t*Math.PI/180));
+const DIRS=[[0,'upstage'],[90,'stage left'],[180,'audience'],[270,'stage right']];
+const dirName=d=>{const n=DIRS.find(([a])=>Math.abs(((d-a+540)%360)-180)<=22.5);return n?'toward '+n[1]:d+'°'};
+function beamShape(id,p,c){
+  // A light that's off throws no beam; the empty group keeps its place for live color updates.
+  if(lum(c)<=0.02)return sv('g',{class:'beamg'});
+  const col=c,op=0.25+0.5*lum(c);
+  const t=p.tilt||0,d=beamReach(t),k=id;
+  const r=0.3+Math.hypot(BEAM_H,d)*Math.tan(BEAM_SPREAD*Math.PI/180);
+  const blur=sv('filter',{id:'bb-'+k,x:'-50%',y:'-50%',width:'200%',height:'200%'},sv('feGaussianBlur',{stdDeviation:0.05}));
+  // Straight down: a soft pool that fades out from the centre.
+  if(d<0.05)return sv('g',{class:'beamg',transform:'translate('+p.x+' '+p.y+')'},
+    sv('defs',{},sv('radialGradient',{id:'bp-'+k},
+      sv('stop',{offset:0,'stop-color':col,'stop-opacity':op}),
+      sv('stop',{offset:0.5,'stop-color':col,'stop-opacity':op*0.45}),
+      sv('stop',{offset:1,'stop-color':col,'stop-opacity':0}))),
+    sv('circle',{class:'beam',r:r*1.3,fill:'url(#bp-'+k+')'}));
+  // Tilted: a cone that's brightest at the lens and fades out past where it lands.
+  // A wide soft cone plus a narrower, brighter core reads as a beam rather than a wedge.
+  const L=d+r*1.6,w=Math.min(r*L/d,r*1.8),fade=(gid,a)=>sv('linearGradient',{id:gid,gradientUnits:'userSpaceOnUse',x1:0,y1:0,x2:0,y2:-L},
+    sv('stop',{offset:0,'stop-color':col,'stop-opacity':a}),
+    sv('stop',{offset:d/L,'stop-color':col,'stop-opacity':a*0.4}),
+    sv('stop',{offset:1,'stop-color':col,'stop-opacity':0}));
+  const cone=(w,gid)=>sv('path',{class:'beam',fill:'url(#'+gid+')',filter:'url(#bb-'+k+')',
+    d:'M-0.1 0L'+(-w)+' '+(-L)+'L'+w+' '+(-L)+'L0.1 0Z'});
+  return sv('g',{class:'beamg',transform:'translate('+p.x+' '+p.y+') rotate('+(p.dir||0)+')'},
+    sv('defs',{},blur,fade('bo-'+k,op*0.6),fade('bc-'+k,op)),
+    cone(w,'bo-'+k),cone(w*0.45,'bc-'+k));
+}
+// The handle sits where the beam lands; drag it to aim. Near the light means straight down.
+const aimSpot=p=>{const d=Math.max(beamReach(p.tilt||0),0.45),a=(p.dir||0)*Math.PI/180;return {x:p.x+d*Math.sin(a),y:p.y-d*Math.cos(a)}};
+function aimAt(id,pt){
+  const p=S.positions[id],dx=pt.x-p.x,dy=pt.y-p.y,dist=Math.hypot(dx,dy);
+  if(dist<0.3){p.tilt=0;return}
+  p.dir=(Math.round(Math.atan2(dx,-dy)*180/Math.PI/5)*5+360)%360;
+  p.tilt=dist>=BEAM_MAX-0.05?90:Math.round(Math.atan(dist/BEAM_H)*180/Math.PI);
+}
 
 function drawPlot(){
   if(!S)return;
@@ -598,7 +690,7 @@ function drawPlot(){
     sv('text',{class:'lbl',x:-0.35,y:D/2,transform:'rotate(-90 '+(-0.35)+' '+(D/2)+')'},'STAGE RIGHT'),
     sv('text',{class:'lbl',x:W+0.35,y:D/2,transform:'rotate(90 '+(W+0.35)+' '+(D/2)+')'},'STAGE LEFT'),
     sv('text',{class:'lbl',x:W-0.05,y:D+0.45,style:'text-anchor:end'},+W.toFixed(1)+' × '+(+D.toFixed(1))+' m'));
-  if(!drawMode){
+  if(editing&&!drawMode){
     // Grab an edge or corner of the stage to reshape it.
     const cur={n:'ns',s:'ns',e:'ew',w:'ew',nw:'nwse',se:'nwse',ne:'nesw',sw:'nesw'};
     for(const [d,x1,y1,x2,y2] of [['n',0,0,W,0],['s',0,D,W,D],['w',0,0,0,D],['e',W,0,W,D]])
@@ -613,19 +705,30 @@ function drawPlot(){
       sv('rect',{x:x0,y:sc.y-0.07,width:sc.width,height:0.14,rx:0.03,fill:projOn?'#93c5fd':'#71717a'}),
       // Label below the screen when it's right at the back, so it doesn't sit on "UPSTAGE".
       sv('text',{class:'lbl',x:sc.x,y:sc.y<0.5?sc.y+0.4:sc.y-0.2},'Screen · '+sc.width+' m'+(projOn?' · on':''))),
-      sv('circle',{class:'handle','data-kind':'hl',cx:x0,cy:sc.y,r:0.13}),
-      sv('circle',{class:'handle','data-kind':'hr',cx:x0+sc.width,cy:sc.y,r:0.13}));
+      editing?sv('circle',{class:'handle','data-kind':'hl',cx:x0,cy:sc.y,r:0.13}):null,
+      editing?sv('circle',{class:'handle','data-kind':'hr',cx:x0+sc.width,cy:sc.y,r:0.13}):null);
   }
+  for(const [id,p] of Object.entries(S.positions))if(fxInfo(id))kids.push(beamShape(id,p,(fxLive(id)||{}).swatch||'#000000'));
   for(const [id,p] of Object.entries(S.positions)){
     const f=fxInfo(id);if(!f)continue;
     const c=(fxLive(id)||{}).swatch||'#000000';
     defs.append(sv('radialGradient',{id:'glow-'+id},sv('stop',{offset:0,'stop-color':c}),sv('stop',{offset:1,'stop-color':c,'stop-opacity':0})));
-    kids.push(sv('g',{class:'fxg'+(sel===id?' sel':''),'data-kind':'fx','data-id':id,transform:'translate('+p.x+' '+p.y+')'},
+    kids.push(sv('g',{class:'fxg'+(sel.includes(id)?' sel':''),'data-kind':'fx','data-id':id,transform:'translate('+p.x+' '+p.y+')'},
       sv('circle',{class:'glow',r:0.75,fill:'url(#glow-'+id+')',opacity:0.85*lum(c)}),
       sv('rect',{class:'body',x:-0.22,y:-0.22,width:0.44,height:0.44,rx:0.08}),
       sv('circle',{class:'lens',r:0.13,fill:lum(c)>0.02?c:'#18181b'}),
       sv('text',{class:'fxname',y:0.5},f.name),
       sv('title',{},f.name+' · '+f.manufacturer+' '+f.model+' · U'+f.universe+'.'+f.address)));
+  }
+  if(!editing&&P&&!Object.keys(S.positions).some(fxInfo))
+    kids.push(sv('text',{class:'hint',x:W/2,y:D/2},'No lights placed yet — use Edit stage in the menu'));
+  if(editing&&!drawMode&&sel.length===1&&S.positions[sel[0]]&&fxInfo(sel[0])){
+    const a=aimSpot(S.positions[sel[0]]);
+    kids.push(sv('circle',{class:'aim','data-kind':'aim','data-id':sel[0],cx:a.x,cy:a.y,r:0.12},sv('title',{},'Drag to aim the beam')));
+  }
+  if(drag&&drag.kind==='box'&&drag.rect){
+    const r=drag.rect;
+    kids.push(sv('rect',{class:'preview',x:r.x,y:r.y,width:r.w,height:r.h}));
   }
   if(drawMode){
     const r=drag&&drag.rect;
@@ -646,6 +749,10 @@ function updatePlotColors(){
     g.querySelector('.glow').setAttribute('opacity',0.85*lum(c));
     g.querySelector('.lens').setAttribute('fill',lum(c)>0.02?c:'#18181b');
   }
+  if(!drag){
+    const old=[...plot.querySelectorAll('.beamg')],ids=Object.keys(S.positions).filter(id=>fxInfo(id));
+    if(old.length===ids.length)old.forEach((g,i)=>g.replaceWith(beamShape(ids[i],S.positions[ids[i]],(fxLive(ids[i])||{}).swatch||'#000000')));
+  }
   updateSelPanel();
 }
 function svgPoint(e){return new DOMPoint(e.clientX,e.clientY).matrixTransform(plot.getScreenCTM().inverse())}
@@ -660,8 +767,21 @@ plot.onpointerdown=e=>{
     drag={kind:'draw',inv,start:at,moved:false,orig:snapshot(),rect:null};
     return;
   }
+  // A click picks one light, shift (or ⌘/Ctrl) adds or removes it, and dragging
+  // across empty stage draws a box that selects everything inside it.
+  const multi=e.shiftKey||e.metaKey||e.ctrlKey;
+  const startBox=()=>{
+    e.preventDefault();plot.setPointerCapture(e.pointerId);
+    drag={kind:'box',inv,start:at,moved:false,keep:multi?[...sel]:[],rect:null};
+  };
+  if(!editing){
+    const t=e.target.closest('[data-kind=fx]');
+    if(!t)return startBox();
+    if(multi)toggleSel(t.dataset.id);else setSel([t.dataset.id]);
+    return;
+  }
   const t=e.target.closest('[data-kind]');
-  if(!t){select(null);return}
+  if(!t)return startBox();
   e.preventDefault();plot.setPointerCapture(e.pointerId);plot.focus({preventScroll:true,focusVisible:false});
   const id=t.dataset.id,kind=t.dataset.kind;
   if(kind.startsWith('st-')){
@@ -670,16 +790,24 @@ plot.onpointerdown=e=>{
     return;
   }
   drag={kind,id,start:svgPoint(e),moved:false,
-    orig:kind==='fx'?{...S.positions[id]}:{...S.screen}};
-  if(kind==='fx')select(id);
+    orig:kind==='fx'||kind==='aim'?{...S.positions[id]}:{...S.screen}};
+  if(kind==='fx'){
+    drag.multi=multi;
+    drag.ids=sel.includes(id)?[...sel]:[id];
+    drag.origs=Object.fromEntries(drag.ids.map(i=>[i,{...S.positions[i]}]));
+  }
 };
 plot.onpointermove=e=>{
   if(!drag)return;
-  if(drag.kind==='draw'||drag.kind.startsWith('st-')){
+  if(drag.kind==='draw'||drag.kind==='box'||drag.kind.startsWith('st-')){
     const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(drag.inv);
     if(!drag.moved&&Math.hypot(p.x-drag.start.x,p.y-drag.start.y)<0.05)return;
     drag.moved=true;
-    if(drag.kind==='draw'){
+    if(drag.kind==='box'){
+      const r=drag.rect={x:Math.min(drag.start.x,p.x),y:Math.min(drag.start.y,p.y),w:Math.abs(p.x-drag.start.x),h:Math.abs(p.y-drag.start.y)};
+      const inside=placedIds().filter(id=>{const q=S.positions[id];return q.x>=r.x&&q.x<=r.x+r.w&&q.y>=r.y&&q.y<=r.y+r.h});
+      sel=[...drag.keep,...inside.filter(id=>!drag.keep.includes(id))];
+    }else if(drag.kind==='draw'){
       const x1=snap(drag.start.x),y1=snap(drag.start.y),x2=snap(p.x),y2=snap(p.y);
       drag.rect={x:Math.min(x1,x2),y:Math.min(y1,y2),w:Math.abs(x2-x1),h:Math.abs(y2-y1)};
     }else{
@@ -696,7 +824,14 @@ plot.onpointermove=e=>{
   const p=svgPoint(e),dx=p.x-drag.start.x,dy=p.y-drag.start.y,o=drag.orig;
   if(!drag.moved&&Math.hypot(dx,dy)<0.05)return;
   drag.moved=true;
-  if(drag.kind==='fx')S.positions[drag.id]={x:clampN(snap(o.x+dx),0,S.width),y:clampN(snap(o.y+dy),0,S.depth)};
+  if(drag.kind==='fx'){
+    // Move the group by the same amount, stopping it at the stage edges together.
+    const os=Object.values(drag.origs);
+    const mx=clampN(snap(dx),-Math.min(...os.map(q=>q.x)),S.width-Math.max(...os.map(q=>q.x)));
+    const my=clampN(snap(dy),-Math.min(...os.map(q=>q.y)),S.depth-Math.max(...os.map(q=>q.y)));
+    for(const [i,q] of Object.entries(drag.origs))S.positions[i]={...q,x:+(q.x+mx).toFixed(2),y:+(q.y+my).toFixed(2)};
+  }
+  else if(drag.kind==='aim')aimAt(drag.id,p);
   else if(drag.kind==='screen'){
     S.screen.x=clampN(snap(o.x+dx),o.width/2,S.width-o.width/2);S.screen.y=clampN(snap(o.y+dy),0,S.depth);
   }else{
@@ -711,6 +846,10 @@ plot.onpointermove=e=>{
 plot.onpointerup=plot.onpointercancel=()=>{
   if(!drag)return;
   const d=drag;drag=null;
+  if(d.kind==='box'){
+    if(!d.moved&&!d.keep.length)sel=[]; // a plain click on empty stage clears
+    drawPlot();return;
+  }
   if(d.kind==='draw'){
     const r=d.rect;
     if(r&&r.w>=1&&r.h>=1){reframe(d.orig,r.x,r.y,r.w,r.h);setDrawMode(false);saveStage()}
@@ -718,21 +857,32 @@ plot.onpointerup=plot.onpointercancel=()=>{
     return;
   }
   if(d.kind.startsWith('st-'))view=null;
+  if(d.kind==='fx'){
+    if(!d.moved){if(d.multi)toggleSel(d.id);else setSel([d.id]);return}
+    if(!sel.includes(d.id))sel=[d.id];
+  }
   drawPlot();if(d.moved)saveStage();
 };
 plot.setAttribute('tabindex','0');
 plot.onkeydown=e=>{
   if(drawMode&&e.key==='Escape'){setDrawMode(false);return}
-  if(!sel||!S.positions[sel])return;
-  const step=e.shiftKey?0.5:SNAP,p=S.positions[sel];
+  if(!sel.length)return;
+  if(!editing){if(e.key==='Escape')setSel([]);return}
+  const step=e.shiftKey?0.5:SNAP;
   const mv={ArrowLeft:[-step,0],ArrowRight:[step,0],ArrowUp:[0,-step],ArrowDown:[0,step]}[e.key];
-  if(mv){e.preventDefault();p.x=clampN(+(p.x+mv[0]).toFixed(2),0,S.width);p.y=clampN(+(p.y+mv[1]).toFixed(2),0,S.depth);drawPlot();saveStage()}
+  if(mv){
+    e.preventDefault();
+    for(const id of sel){const p=S.positions[id];if(p){p.x=clampN(+(p.x+mv[0]).toFixed(2),0,S.width);p.y=clampN(+(p.y+mv[1]).toFixed(2),0,S.depth)}}
+    drawPlot();saveStage();
+  }
   else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();unplace(sel)}
-  else if(e.key==='Escape')select(null);
+  else if(e.key==='Escape')setSel([]);
 };
 
-function select(id){sel=id;drawPlot()}
-function unplace(id){delete S.positions[id];if(sel===id)sel=null;drawPlot();saveStage()}
+function setSel(ids){sel=ids;drawPlot()}
+function toggleSel(id){setSel(sel.includes(id)?sel.filter(x=>x!==id):[...sel,id])}
+const placedIds=()=>Object.keys(S.positions).filter(fxInfo);
+function unplace(ids){for(const id of ids)delete S.positions[id];sel=sel.filter(x=>!ids.includes(x));drawPlot();saveStage()}
 // Somewhere free along the front of the stage for a fixture placed with a click.
 function autoSpot(){
   const used=Object.values(S.positions);
@@ -769,45 +919,93 @@ function trayDrag(e,f){
         const p=svgPoint(ev);spot={x:clampN(snap(p.x),0,S.width),y:clampN(snap(p.y),0,S.depth)};
       }
     }
-    if(spot){S.positions[f.id]=spot;sel=f.id;drawPlot();saveStage()}
+    if(spot){S.positions[f.id]={...spot,tilt:0,dir:0};sel=[f.id];drawPlot();saveStage()}
   };
   document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
 }
 
-// Quick controls for the selected light.
+// The selected lights: all their controls on the main view, placement and aim in the editor.
 let selRefs=null;
 function drawSelPanel(){
-  const box=$('selpanel'),f=sel&&fxInfo(sel),live=sel&&fxLive(sel);
-  if(!f||!S.positions[sel]){box.hidden=true;selRefs=null;box.dataset.id='';return}
-  if(box.dataset.id===sel&&selRefs){updateSelPanel();return}
-  box.dataset.id=sel;box.hidden=false;
-  const one=b=>light(Object.assign({fixtures:[f.id]},b));
-  const dim=h('input',{type:'range',min:0,max:255}),out=h('output',{});
-  dim.oninput=()=>{out.textContent=pct(+dim.value);one({dimmer:+dim.value})};
-  const hasRGB=live&&['Red','Green','Blue'].every(n=>live.components.includes(n));
-  const col=hasRGB?h('input',{type:'color',title:'Color'}):null;
-  if(col)col.oninput=()=>one({color:rgb(col.value)});
-  selRefs={dim,out,col};
+  const box=$('selpanel');
+  sel=sel.filter(id=>fxInfo(id)&&S.positions[id]);
+  if(!sel.length){box.hidden=true;selRefs=null;box.dataset.id='';return}
+  const key=(editing?'e:':'c:')+sel.join(',');
+  if(box.dataset.id===key&&selRefs){updateSelPanel();return}
+  box.dataset.id=key;box.hidden=false;
+  const fs=sel.map(fxInfo),f=fs[0],many=fs.length>1;
+  const everyone=placedIds();
+  const head=(...btns)=>h('div',{class:'head'},
+    h('span',{},h('b',{},fs.map(x=>x.name).join(', ')),' ',
+      h('small',{class:'host'},many?fs.length+' lights':f.manufacturer+' '+f.model+' · U'+f.universe+'.'+f.address)),
+    h('span',{class:'lbtns'},
+      sel.length<everyone.length?h('button',{onclick:()=>setSel(everyone)},'Select all'):null,
+      h('button',{onclick:()=>setSel([])},'Clear'),btns));
+  if(!editing){
+    selRefs={};
+    const live=sel.map(fxLive).filter(Boolean);
+    box.replaceChildren(head(h('button',{onclick:()=>{location.hash='edit'}},'Move / aim')),
+      ...(live.length===sel.length?fxControls(live).flat(Infinity).filter(Boolean):[h('p',{class:'empty'},'Waiting for the lights…')]));
+    if(live.length===sel.length)fillTile(live[0],true);
+    return;
+  }
+  // Tilt and direction apply to every selected light; position only makes sense one at a time.
+  const each=fn=>{for(const id of sel)fn(S.positions[id]);drawPlot();saveStage()};
+  const pos=(axis,max)=>{
+    const i=h('input',{type:'number',class:'pos',min:0,max,step:0.1,'aria-label':axis.toUpperCase()});
+    i.onchange=()=>{const v=parseFloat(i.value);if(!isFinite(v))return;S.positions[f.id][axis]=clampN(+v.toFixed(2),0,axis==='x'?S.width:S.depth);drawPlot();saveStage()};
+    return i;
+  };
+  const x=many?null:pos('x'),y=many?null:pos('y');
+  const tilt=h('input',{type:'range',min:0,max:90,step:1}),tiltOut=h('output',{});
+  const dir=h('input',{type:'range',min:0,max:355,step:5}),dirOut=h('output',{});
+  const down=h('button',{},'Straight down');
+  tilt.oninput=()=>each(p=>p.tilt=+tilt.value);
+  dir.oninput=()=>each(p=>p.dir=+dir.value);
+  down.onclick=()=>each(p=>p.tilt=0);
+  selRefs={x,y,tilt,tiltOut,dir,dirOut,down};
   box.replaceChildren(
-    h('div',{class:'head'},h('span',{},h('b',{},f.name),' ',h('small',{class:'host'},f.manufacturer+' '+f.model+' · U'+f.universe+'.'+f.address)),
-      h('span',{class:'lbtns'},
-        h('button',{onclick:()=>showTile(f.id)},'All controls'),
-        h('button',{onclick:()=>unplace(f.id)},'Remove from stage'))),
-    h('div',{class:'row'},h('span',{},'Dimmer'),dim,out),
-    col?h('div',{class:'row'},h('span',{},'Color'),h('span',{},col),h('span',{})):null);
+    head(h('button',{onclick:()=>{location.hash=''}},'Light controls'),
+      h('button',{onclick:()=>unplace([...sel])},'Remove from stage')),
+    many?h('p',{class:'host',style:'margin:10px 0'},'Drag any selected light to move them together.')
+      :[h('div',{class:'row'},h('span',{},'Across'),h('span',{},x),h('output',{},'m')),
+        h('div',{class:'row'},h('span',{},'From back'),h('span',{},y),h('output',{},'m'))],
+    h('div',{class:'row'},h('span',{},'Tilt'),tilt,tiltOut),
+    h('div',{class:'row'},h('span',{},'Direction'),dir,dirOut),
+    h('div',{class:'row'},h('span',{}),h('span',{class:'lbtns'},down,many?null:h('small',{class:'host'},' or drag the dot on the plot')),h('span',{})));
   updateSelPanel();
 }
 function updateSelPanel(){
-  const live=sel&&fxLive(sel);if(!selRefs||!live)return;
-  setVal(selRefs.dim,live.state.dimmer);selRefs.out.textContent=pct(live.state.dimmer);
-  if(selRefs.col)setVal(selRefs.col,hex(live.state.comp.Red||0,live.state.comp.Green||0,live.state.comp.Blue||0));
+  if(!editing||!selRefs||!sel.length||!S.positions[sel[0]])return;
+  const p=S.positions[sel[0]],t=p.tilt||0,r=selRefs;
+  for(const k of ['x','y'])if(r[k]&&document.activeElement!==r[k])r[k].value=p[k];
+  setVal(r.tilt,t);setVal(r.dir,p.dir||0);
+  r.tiltOut.textContent=t+'°';
+  r.dirOut.textContent=t?(p.dir||0)+'°':'—';r.dir.disabled=!t;r.down.disabled=!t;
+  r.dir.title=t?dirName(p.dir||0):'Pointing straight down';
+  r.tilt.title=t?t+'° from straight down':'Straight down';
 }
-function showTile(id){
-  const i=((L&&L.fixtures)||[]).findIndex(f=>f.id===id);
-  const tile=document.querySelectorAll('#fixtures .fx')[i];if(!tile)return;
-  const d=tile.querySelector('details');if(d){d.open=true;openDetails.add(id)}
-  tile.scrollIntoView({behavior:'smooth',block:'center'});
+
+// ---------- Views and menu ----------
+const VIEWS={'':'Stage',edit:'Edit stage',lights:'Lights & scenes',patch:'Patch'};
+function openMenu(on){$('menu').hidden=!on;$('menuBtn').setAttribute('aria-expanded',on)}
+$('menuBtn').onclick=e=>{e.stopPropagation();openMenu($('menu').hidden)};
+document.addEventListener('click',e=>{if(!e.target.closest('.menuwrap'))openMenu(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')openMenu(false)});
+function route(){
+  let v=location.hash.replace(/^#\/?/,'');if(!(v in VIEWS))v='';
+  for(const c of document.querySelectorAll('main>[data-view]'))c.hidden=!c.dataset.view.split(' ').includes(v||'stage');
+  for(const a of document.querySelectorAll('#menu a')){
+    if(a.getAttribute('href').slice(1)===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  }
+  editing=v==='edit';document.body.classList.toggle('editing',editing);
+  $('viewTitle').textContent=VIEWS[v];document.title='Telescope · '+VIEWS[v];
+  $('stageHint').textContent=editing?'Click to select · shift-click or drag a box for several · drag lights to move':'Click a light to control it · shift-click or drag a box for several';
+  openMenu(false);
+  if(S){if(drawMode&&!editing)setDrawMode(false);else drawPlot()}
 }
+window.addEventListener('hashchange',route);
+route();
 
 refresh();refreshLights();loadPatch().then(loadStage);
 setInterval(refresh,5000);setInterval(refreshLights,3000);

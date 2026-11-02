@@ -272,7 +272,8 @@ async function handle(req, res) {
     const body = await readJson(req);
     // {on: true|false}, or omit `on` to toggle
     lights.setBlackout(body.on === undefined ? !lights.isBlackout() : !!body.on, seconds(body.fade));
-  } else if (route("POST", /^\/api\/lights\/release$/)) lights.release();
+  } else if (route("POST", /^\/api\/lights\/master$/)) lights.setMaster((await readJson(req)).level);
+  else if (route("POST", /^\/api\/lights\/release$/)) lights.release();
   else if (route("POST", /^\/api\/scenes$/)) lights.saveScene((await readJson(req)).name);
   else if (route("POST", /^\/api\/scenes\/recall$/)) {
     const body = await readJson(req);
@@ -325,8 +326,13 @@ server.on("error", (e) => {
   }
   throw e;
 });
-server.listen(PORT, "0.0.0.0", () =>
-  console.log(
-    `Projector ${FIXED_HOST || `${HOST()} (auto, MAC ${discover.mac()})`} + Art-Net ${ARTNET_HOST} on http://0.0.0.0:${PORT}`
-  )
-);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Projector ${FIXED_HOST || `${HOST()} (auto, MAC ${discover.mac()})`} + Art-Net ${ARTNET_HOST}`);
+  // 0.0.0.0 isn't something you can type into a browser, so list the real addresses.
+  const lan = Object.values(require("node:os").networkInterfaces())
+    .flat()
+    .filter((a) => a.family === "IPv4" && !a.internal)
+    .map((a) => a.address);
+  console.log(`Open http://localhost:${PORT} on this Mac`);
+  for (const ip of lan) console.log(`  or http://${ip}:${PORT} from a phone on the same network`);
+});
